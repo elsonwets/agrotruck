@@ -1,0 +1,4 @@
+"use client";
+import Image from "next/image";
+import { useState } from "react";
+export function TruckGallery({images,name}:{images:string[];name:string}){const [active,setActive]=useState(0);return <div><div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-primary/10 bg-white"><Image src={images[active]} alt={`${name}, vue ${active+1}`} fill priority className="object-cover" sizes="(max-width:1024px) 100vw, 720px"/></div><div className="mt-3 grid grid-cols-3 gap-3">{images.map((image,i)=><button key={image} onClick={()=>setActive(i)} aria-label={`Afficher la vue ${i+1}`} className={`focus-ring relative aspect-[16/9] overflow-hidden rounded-xl border-2 ${i===active?"border-primary":"border-transparent opacity-65 hover:opacity-100"}`}><Image src={image} alt="" fill className="object-cover" sizes="180px"/></button>)}</div></div>}

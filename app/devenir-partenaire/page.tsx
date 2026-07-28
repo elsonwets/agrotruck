@@ -1,0 +1,4 @@
+import type { Metadata } from "next";
+import { PartnerOnboarding } from "@/components/partner/partner-onboarding";
+export const metadata:Metadata={title:"Cadastrar um truck",description:"Cadastre o seu truck ou frota na AgroTruck."};
+export default function PartnerPage(){return <div className="min-h-[70vh] bg-[#f8f8f5] pb-24 pt-14"><div className="page-shell max-w-4xl"><div className="mb-10 text-center"><p className="text-xs font-bold uppercase tracking-[.2em] text-danger">Espaço do proprietário</p><h1 className="mt-3 font-heading text-4xl font-extrabold tracking-[-.04em] text-foreground md:text-6xl">Cadastre e gira os seus trucks.</h1><p className="mx-auto mt-4 max-w-2xl font-light leading-7 text-muted-foreground">Verifique o seu email, publique o primeiro truck e mantenha a disponibilidade atualizada.</p></div><PartnerOnboarding/></div></div>}

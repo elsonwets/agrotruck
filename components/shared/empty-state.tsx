@@ -1,0 +1,3 @@
+import { SearchX } from "lucide-react";
+import { Button } from "@/components/ui/button";
+export function EmptyState({ onReset }: { onReset?: () => void }) { return <div className="rounded-[20px] border border-dashed border-primary/20 bg-white px-6 py-16 text-center"><SearchX className="mx-auto size-10 text-primary/45"/><h3 className="mt-4 font-heading text-xl font-bold text-foreground">Nenhum truck encontrado</h3><p className="mx-auto mt-2 max-w-md text-sm font-light text-muted-foreground">Retire um filtro para ver mais veículos disponíveis.</p>{onReset && <Button className="mt-6" variant="secondary" onClick={onReset}>Limpar filtros</Button>}</div>; }
