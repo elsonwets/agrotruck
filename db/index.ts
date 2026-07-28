@@ -21,3 +21,5 @@ export function requireDatabase() {
   if (!db) throw new Error("DATABASE_URL não está configurada.");
   return db;
 }
+
+export const db = requireDatabase();

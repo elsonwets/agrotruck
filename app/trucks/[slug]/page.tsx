@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BadgeCheck, Building2, Check, Info, MapPin, Scale, Truck as TruckIcon, UserRound } from "lucide-react";
-import { trucks } from "@/data/trucks";
 import { findTruckBySlug } from "@/db/queries";
 import { truckTypeLabels } from "@/types/truck";
 import { TruckGallery } from "@/components/trucks/truck-gallery";
 import { TruckStatusBadge } from "@/components/trucks/truck-status-badge";
 import { TruckContactActions } from "@/components/trucks/truck-contact-actions";
+import { companySlug } from "@/lib/companies";
 
-export function generateStaticParams() { return trucks.map((truck) => ({ slug: truck.slug })); }
+export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const truck = await findTruckBySlug((await params).slug);
   return { title: truck?.name ?? "Truck não encontrado", description: truck?.description };
@@ -47,7 +47,7 @@ export default async function TruckDetailPage({ params }: { params: Promise<{ sl
         <aside>
           <div className="sticky top-28 rounded-[20px] border border-primary/10 bg-white p-6 shadow-[0_18px_50px_rgba(17,17,17,.07)]">
             <p className="text-[11px] font-bold uppercase tracking-[.16em] text-danger">Contacto direto</p>
-            <div className="mt-4 flex items-center gap-3"><span className="grid size-12 place-items-center rounded-full bg-primary/8">{truck.companyName ? <Building2 className="text-primary" /> : <UserRound className="text-primary" />}</span><div><h2 className="font-heading text-lg font-semibold text-foreground">{truck.companyName ?? truck.ownerName}</h2>{truck.companyName && <p className="text-xs text-muted-foreground">{truck.ownerName}</p>}</div></div>
+            <div className="mt-4 flex items-center gap-3"><span className="grid size-12 place-items-center rounded-full bg-primary/8">{truck.companyName ? <Building2 className="text-primary" /> : <UserRound className="text-primary" />}</span><div><h2 className="font-heading text-lg font-semibold text-foreground">{truck.companyName ? <Link href={`/entreprises/${companySlug(truck.companyName)}`} className="focus-ring hover:text-primary">{truck.companyName}</Link> : truck.ownerName}</h2>{truck.companyName && <p className="text-xs text-muted-foreground">{truck.ownerName} · <Link href={`/entreprises/${companySlug(truck.companyName)}`} className="font-semibold text-primary hover:underline">Ver frota</Link></p>}</div></div>
             <div className="my-6 h-px bg-primary/10" />
             <p className="flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="size-4 text-primary" />{truck.location}, Guiné-Bissau</p>
             <p className="mt-3 text-xl font-semibold text-foreground">{truck.phone}</p>

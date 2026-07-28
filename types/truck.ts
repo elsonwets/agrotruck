@@ -1,4 +1,5 @@
 export type TruckAvailability = "available" | "in_transit" | "occupied" | "maintenance";
+export type TruckPublicationStatus = "pending_payment" | "published" | "rejected";
 
 export type TruckType = "flatbed" | "dump_truck" | "cargo" | "container" | "trailer" | "canter";
 
@@ -24,6 +25,11 @@ export interface Truck {
   images: string[];
   verified: boolean;
   restrictions: string[];
+}
+
+export interface OwnerTruck extends Truck {
+  registration: string;
+  publicationStatus: TruckPublicationStatus;
 }
 
 export const truckTypeLabels: Record<TruckType, string> = {

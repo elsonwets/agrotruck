@@ -11,13 +11,13 @@ const languages: { code: Language; short: string; label: string }[] = [
   { code: "en", short: "EN", label: "English" },
 ];
 
-export function HeaderControls({ className }: { className?: string }) {
+export function HeaderControls({ className, compact = false }: { className?: string; compact?: boolean }) {
   const { language, setLanguage, theme, toggleTheme, t } = useAppSettings();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   return <div className={cn("flex items-center gap-2", className)}>
     <details ref={detailsRef} className="group relative">
-      <summary className="theme-control focus-ring flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-xl border border-primary/15 bg-white px-3 text-xs font-bold text-primary shadow-sm transition hover:border-primary/30" aria-label={t("controls.language")}>
-        <Globe2 className="size-4"/><span>{language.toUpperCase()}</span>
+      <summary className={cn("theme-control focus-ring flex h-10 cursor-pointer list-none items-center rounded-xl border border-primary/15 bg-white text-xs font-bold text-primary shadow-sm transition hover:border-primary/30", compact ? "w-10 justify-center" : "gap-1.5 px-3")} aria-label={`${t("controls.language")} — ${language.toUpperCase()}`}>
+        <Globe2 className="size-4"/>{!compact && <span>{language.toUpperCase()}</span>}
       </summary>
       <div className="theme-menu absolute right-0 top-12 z-50 w-44 overflow-hidden rounded-xl border border-primary/15 bg-white p-1.5 shadow-xl">
         {languages.map((item) => <button key={item.code} type="button" onClick={() => { setLanguage(item.code); detailsRef.current?.removeAttribute("open"); }} className="focus-ring flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#4e4a43] hover:bg-primary/7 hover:text-primary">

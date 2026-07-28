@@ -7,6 +7,7 @@ import { Building2, MapPin, Scale } from "lucide-react";
 import type { Truck } from "@/types/truck";
 import { WhatsappButton } from "@/components/shared/whatsapp-button";
 import { CallButton } from "@/components/shared/call-button";
+import { companySlug } from "@/lib/companies";
 import { TruckStatusBadge } from "./truck-status-badge";
 
 export function TruckCard({ truck }: { truck: Truck }) {
@@ -18,7 +19,7 @@ export function TruckCard({ truck }: { truck: Truck }) {
     </Link>
     <div className="p-5 md:p-6">
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0"><h3 className="font-heading text-xl font-bold tracking-[-.025em] text-[#111111] md:text-2xl"><Link href={`/trucks/${truck.slug}`} className="focus-ring hover:text-primary">{truck.name}</Link></h3><p className="mt-1 flex items-center gap-1.5 text-sm text-[#667069]"><Building2 className="size-4"/>{truck.companyName ?? truck.ownerName}</p></div>
+        <div className="min-w-0"><h3 className="font-heading text-xl font-bold tracking-[-.025em] text-[#111111] md:text-2xl"><Link href={`/trucks/${truck.slug}`} className="focus-ring hover:text-primary">{truck.name}</Link></h3><p className="mt-1 flex items-center gap-1.5 text-sm text-[#667069]"><Building2 className="size-4"/>{truck.companyName ? <Link href={`/entreprises/${companySlug(truck.companyName)}`} className="focus-ring hover:text-primary">{truck.companyName}</Link> : truck.ownerName}</p></div>
         <div className="shrink-0 text-right"><strong className="font-heading text-lg font-bold text-primary">{truck.capacityTons} t</strong><span className="block text-[11px] uppercase tracking-wider text-[#7a817c]">capacidade</span></div>
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#5f6761]"><span className="flex items-center gap-1.5"><MapPin className="size-4 text-primary"/>{truck.location}</span><span className="flex items-center gap-1.5"><Scale className="size-4 text-primary"/>{truck.acceptedMaterials.slice(0, 3).join(" · ")}</span></div>
@@ -26,4 +27,3 @@ export function TruckCard({ truck }: { truck: Truck }) {
     </div>
   </motion.article>;
 }
-

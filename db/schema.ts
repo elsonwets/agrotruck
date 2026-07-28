@@ -5,7 +5,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   accountType: text("account_type").notNull().default("individual"),
-  name: text("name"),
+  name: text("name").notNull().default(""),
+  image: text("image"),
   phone: text("phone"),
   whatsapp: text("whatsapp"),
   city: text("city"),
@@ -13,6 +14,42 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index("users_email_idx").on(table.email)]);
+
+export const sessions = pgTable("sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+}, (table) => [index("sessions_user_idx").on(table.userId)]);
+
+export const accounts = pgTable("accounts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("accounts_user_idx").on(table.userId)]);
+
+export const verifications = pgTable("verifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("verifications_identifier_idx").on(table.identifier)]);
 
 export const emailVerificationCodes = pgTable("email_verification_codes", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -42,6 +79,9 @@ export const trucks = pgTable("trucks", {
   images: jsonb("images").$type<string[]>().notNull().default([]),
   restrictions: jsonb("restrictions").$type<string[]>().notNull().default([]),
   verified: boolean("verified").notNull().default(false),
+  publicationStatus: text("publication_status").notNull().default("pending_payment"),
+  paymentConfirmedAt: timestamp("payment_confirmed_at", { withTimezone: true }),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -50,6 +90,7 @@ export const trucks = pgTable("trucks", {
   index("trucks_owner_idx").on(table.ownerId),
   index("trucks_location_idx").on(table.location),
   index("trucks_availability_idx").on(table.availability),
+  index("trucks_publication_status_idx").on(table.publicationStatus),
 ]);
 
 export type DatabaseUser = typeof users.$inferSelect;

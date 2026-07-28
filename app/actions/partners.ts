@@ -1,16 +1,16 @@
 "use server";
 
-import { createHash, randomInt } from "node:crypto";
-import { and, desc, eq, gt, isNull } from "drizzle-orm";
+import { randomInt } from "node:crypto";
+import { and, count, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { requireDatabase } from "@/db";
-import { emailVerificationCodes, trucks, users } from "@/db/schema";
+import { trucks, users } from "@/db/schema";
+import { auth } from "@/lib/auth";
 
-const emailSchema = z.email().transform((email) => email.trim().toLowerCase());
-const codeSchema = z.string().regex(/^\d{6}$/);
 const truckSchema = z.object({
-  accountType: z.enum(["particulier", "independent", "company"]),
+  accountType: z.enum(["particulier", "company"]),
   name: z.string().min(2).max(120),
   phone: z.string().min(7).max(30),
   whatsapp: z.string().min(7).max(30),
@@ -30,55 +30,21 @@ const truckSchema = z.object({
 
 type ActionResult<T = undefined> = { success: true; data: T } | { success: false; error: string };
 
-export async function requestEmailVerification(rawEmail: string): Promise<ActionResult<{ previewCode?: string }>> {
-  const parsed = emailSchema.safeParse(rawEmail);
-  if (!parsed.success) return { success: false, error: "Introduza um endereço de email válido." };
-  try {
-    const db = requireDatabase();
-    const code = randomInt(100000, 1000000).toString();
-    await db.insert(emailVerificationCodes).values({
-      email: parsed.data,
-      codeHash: hashCode(parsed.data, code),
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    });
-    // À remplacer par Resend/Brevo. Le code n'est renvoyé que pour cette version de démonstration.
-    return { success: true, data: { previewCode: code } };
-  } catch (error) {
-    return { success: false, error: databaseError(error) };
-  }
-}
-
-export async function confirmEmailVerification(rawEmail: string, rawCode: string): Promise<ActionResult> {
-  const email = emailSchema.safeParse(rawEmail);
-  const code = codeSchema.safeParse(rawCode);
-  if (!email.success || !code.success) return { success: false, error: "Código de confirmação inválido." };
-  try {
-    const db = requireDatabase();
-    const matches = await db.select().from(emailVerificationCodes).where(and(
-      eq(emailVerificationCodes.email, email.data),
-      eq(emailVerificationCodes.codeHash, hashCode(email.data, code.data)),
-      gt(emailVerificationCodes.expiresAt, new Date()),
-      isNull(emailVerificationCodes.usedAt),
-    )).orderBy(desc(emailVerificationCodes.createdAt)).limit(1);
-    if (!matches[0]) return { success: false, error: "O código expirou ou não está correto." };
-    await db.update(emailVerificationCodes).set({ usedAt: new Date() }).where(eq(emailVerificationCodes.id, matches[0].id));
-    await db.insert(users).values({ email: email.data, emailVerified: true }).onConflictDoUpdate({ target: users.email, set: { emailVerified: true, updatedAt: new Date() } });
-    return { success: true, data: undefined };
-  } catch (error) {
-    return { success: false, error: databaseError(error) };
-  }
-}
-
 export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: string; slug: string }>> {
   const parsed = truckSchema.safeParse(rawData);
   if (!parsed.success) return { success: false, error: "Verifique os dados do proprietário e do truck." };
   const data = parsed.data;
-  const email = data.email.toLowerCase();
   try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return { success: false, error: "Confirme o seu email antes de cadastrar um truck." };
+    if (session.user.email.toLowerCase() !== data.email.toLowerCase()) {
+      return { success: false, error: "O email do formulário não corresponde à conta autenticada." };
+    }
     const db = requireDatabase();
-    const existingUsers = await db.select().from(users).where(and(eq(users.email, email), eq(users.emailVerified, true))).limit(1);
-    const user = existingUsers[0];
-    if (!user) return { success: false, error: "Confirme o seu email antes de cadastrar um truck." };
+    const [{ value: truckCount }] = await db.select({ value: count() }).from(trucks).where(eq(trucks.ownerId, session.user.id));
+    if (data.accountType === "particulier" && truckCount >= 5) {
+      return { success: false, error: "O plano Particular permite no máximo 5 trucks. Escolha o plano Empresa para adicionar mais." };
+    }
     await db.update(users).set({
       accountType: data.accountType === "company" ? "company" : "individual",
       name: data.name,
@@ -87,10 +53,10 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
       city: data.city,
       companyName: data.accountType === "company" ? data.companyName : null,
       updatedAt: new Date(),
-    }).where(eq(users.id, user.id));
+    }).where(eq(users.id, session.user.id));
     const slug = `${slugify(`${data.brand}-${data.model}`)}-${randomInt(1000, 10000)}`;
     const inserted = await db.insert(trucks).values({
-      ownerId: user.id,
+      ownerId: session.user.id,
       slug,
       name: `${data.brand} ${data.model}`,
       brand: data.brand,
@@ -103,11 +69,14 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
       acceptedMaterials: data.acceptedMaterials,
       availability: data.availability,
       description: `Truck ${data.brand} ${data.model} de ${data.capacity} toneladas, disponível para contacto direto através da AgroTruck.`,
-      images: ["/brand/agrotruck-mark.png"],
+      images: [],
       restrictions: ["Condições e preço a confirmar diretamente com o proprietário"],
+      verified: false,
+      publicationStatus: "pending_payment",
     }).returning({ id: trucks.id, slug: trucks.slug });
     revalidatePath("/");
     revalidatePath("/trucks");
+    revalidatePath("/entreprises");
     return { success: true, data: inserted[0] };
   } catch (error) {
     if (String(error).toLowerCase().includes("registration")) return { success: false, error: "Já existe um truck com esta matrícula." };
@@ -115,15 +84,14 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
   }
 }
 
-export async function updateTruckAvailability(rawEmail: string, registration: string, rawAvailability: string): Promise<ActionResult> {
-  const email = emailSchema.safeParse(rawEmail);
+export async function updateTruckAvailability(registration: string, rawAvailability: string): Promise<ActionResult> {
   const availability = z.enum(["available", "in_transit", "occupied", "maintenance"]).safeParse(rawAvailability);
-  if (!email.success || !availability.success) return { success: false, error: "Dados de disponibilidade inválidos." };
+  if (!availability.success) return { success: false, error: "Dados de disponibilidade inválidos." };
   try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return { success: false, error: "A sua sessão expirou. Confirme novamente o seu email." };
     const db = requireDatabase();
-    const owners = await db.select({ id: users.id }).from(users).where(and(eq(users.email, email.data), eq(users.emailVerified, true))).limit(1);
-    if (!owners[0]) return { success: false, error: "Utilizador não verificado." };
-    const updated = await db.update(trucks).set({ availability: availability.data, updatedAt: new Date() }).where(and(eq(trucks.ownerId, owners[0].id), eq(trucks.registration, registration.toUpperCase()))).returning({ id: trucks.id });
+    const updated = await db.update(trucks).set({ availability: availability.data, updatedAt: new Date() }).where(and(eq(trucks.ownerId, session.user.id), eq(trucks.registration, registration.toUpperCase()))).returning({ id: trucks.id });
     if (!updated[0]) return { success: false, error: "Truck não encontrado." };
     revalidatePath("/");
     revalidatePath("/trucks");
@@ -131,11 +99,6 @@ export async function updateTruckAvailability(rawEmail: string, registration: st
   } catch (error) {
     return { success: false, error: databaseError(error) };
   }
-}
-
-function hashCode(email: string, code: string) {
-  const secret = process.env.VERIFICATION_CODE_SECRET ?? process.env.DATABASE_URL ?? "agrotruck-development";
-  return createHash("sha256").update(`${email}:${code}:${secret}`).digest("hex");
 }
 
 function slugify(value: string) {

@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { TrucksBrowser } from "@/components/trucks/trucks-browser";
 import { listTrucks } from "@/db/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const trucks = await listTrucks();
   return <div className="min-h-[70vh] bg-[#f8f8f5] pb-24 pt-10 md:pt-14">
