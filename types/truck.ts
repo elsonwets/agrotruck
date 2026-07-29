@@ -1,4 +1,4 @@
-export type TruckAvailability = "available" | "in_transit" | "occupied" | "maintenance";
+export type TruckAvailability = "available" | "in_transit" | "maintenance";
 export type TruckPublicationStatus = "pending_payment" | "published" | "rejected";
 
 export type TruckType = "flatbed" | "dump_truck" | "cargo" | "container" | "trailer" | "canter";
@@ -30,6 +30,11 @@ export interface Truck {
 export interface OwnerTruck extends Truck {
   registration: string;
   publicationStatus: TruckPublicationStatus;
+  isOnline: boolean;
+  driverName?: string;
+  driverPhone?: string;
+  apprenticeName?: string;
+  apprenticePhone?: string;
 }
 
 export const truckTypeLabels: Record<TruckType, string> = {
@@ -44,6 +49,5 @@ export const truckTypeLabels: Record<TruckType, string> = {
 export const availabilityLabels: Record<TruckAvailability, string> = {
   available: "Disponível",
   in_transit: "Em trânsito",
-  occupied: "Ocupado",
   maintenance: "Manutenção",
 };

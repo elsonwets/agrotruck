@@ -10,14 +10,14 @@ import { trucks, users } from "./schema";
 export async function listTrucks(): Promise<Truck[]> {
   const db = getDatabase();
   if (!db) return demoTrucks;
-  const rows = await db.select({ truck: trucks, owner: users }).from(trucks).innerJoin(users, eq(trucks.ownerId, users.id)).where(and(eq(trucks.verified, true), eq(trucks.publicationStatus, "published"))).orderBy(desc(trucks.createdAt));
+  const rows = await db.select({ truck: trucks, owner: users }).from(trucks).innerJoin(users, eq(trucks.ownerId, users.id)).where(and(eq(trucks.verified, true), eq(trucks.publicationStatus, "published"), eq(trucks.isOnline, true))).orderBy(desc(trucks.createdAt));
   return rows.map(({ truck, owner }) => mapTruck(truck, owner));
 }
 
 export async function findTruckBySlug(slug: string): Promise<Truck | undefined> {
   const db = getDatabase();
   if (!db) return demoTrucks.find((truck) => truck.slug === slug);
-  const rows = await db.select({ truck: trucks, owner: users }).from(trucks).innerJoin(users, eq(trucks.ownerId, users.id)).where(and(eq(trucks.slug, slug), eq(trucks.verified, true), eq(trucks.publicationStatus, "published"))).limit(1);
+  const rows = await db.select({ truck: trucks, owner: users }).from(trucks).innerJoin(users, eq(trucks.ownerId, users.id)).where(and(eq(trucks.slug, slug), eq(trucks.verified, true), eq(trucks.publicationStatus, "published"), eq(trucks.isOnline, true))).limit(1);
   const row = rows[0];
   return row ? mapTruck(row.truck, row.owner) : undefined;
 }
@@ -34,7 +34,16 @@ export async function listOwnerTrucks(ownerId: string): Promise<OwnerTruck[]> {
   const db = getDatabase();
   if (!db) return [];
   const rows = await db.select({ truck: trucks, owner: users }).from(trucks).innerJoin(users, eq(trucks.ownerId, users.id)).where(eq(trucks.ownerId, ownerId)).orderBy(desc(trucks.createdAt));
-  return rows.map(({ truck, owner }) => ({ ...mapTruck(truck, owner), registration: truck.registration, publicationStatus: truck.publicationStatus as TruckPublicationStatus }));
+  return rows.map(({ truck, owner }) => ({
+    ...mapTruck(truck, owner),
+    registration: truck.registration,
+    publicationStatus: truck.publicationStatus as TruckPublicationStatus,
+    isOnline: truck.isOnline,
+    driverName: truck.driverName ?? undefined,
+    driverPhone: truck.driverPhone ?? undefined,
+    apprenticeName: truck.apprenticeName ?? undefined,
+    apprenticePhone: truck.apprenticePhone ?? undefined,
+  }));
 }
 
 function mapTruck(truck: typeof trucks.$inferSelect, owner: typeof users.$inferSelect): Truck {

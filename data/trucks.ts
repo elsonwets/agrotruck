@@ -19,7 +19,7 @@ export const trucks: Truck[] = [
   },
   {
     id: "trk-002", slug: "mercedes-actros-benne", name: "Mercedes Actros Benne", brand: "Mercedes-Benz", model: "Actros 3340", type: "dump_truck", capacityTons: 25,
-    location: "Bafatá", serviceAreas: ["Bafatá", "Gabú", "Mansôa"], acceptedMaterials: ["Areia", "Cascalho", "Pedras"], availability: "occupied", availableFrom: "30 de julho",
+    location: "Bafatá", serviceAreas: ["Bafatá", "Gabú", "Mansôa"], acceptedMaterials: ["Areia", "Cascalho", "Pedras"], availability: "in_transit", availableFrom: "30 de julho",
     ownerName: "Ibrahima Djaló", ownerType: "individual", phone: "+245 966 408 210", whatsapp: "+245966408210",
     description: "Basculante robusta para obras, pedreiras e fornecimento de materiais a granel.", images: [images.fleet, images.highway], verified: true,
     restrictions: ["Sem resíduos perigosos", "Acesso ao estaleiro obrigatório"],
@@ -47,7 +47,7 @@ export const trucks: Truck[] = [
   },
   {
     id: "trk-006", slug: "iveco-trakker-benne", name: "Iveco Trakker Benne", brand: "Iveco", model: "Trakker 380", type: "dump_truck", capacityTons: 28,
-    location: "Bissorã", serviceAreas: ["Bissorã", "Mansôa", "Bissau"], acceptedMaterials: ["Areia", "Cascalho", "Pedras", "Terra"], availability: "occupied",
+    location: "Bissorã", serviceAreas: ["Bissorã", "Mansôa", "Bissau"], acceptedMaterials: ["Areia", "Cascalho", "Pedras", "Terra"], availability: "in_transit",
     ownerName: "Carlos Gomes", companyName: "Obra Norte", ownerType: "company", phone: "+245 966 119 540", whatsapp: "+245966119540",
     description: "Basculante reforçada para obras públicas e abastecimento de estaleiros.", images: [images.fleet, images.highway], verified: true,
     restrictions: ["Distância avaliada conforme a estrada", "Carregamento mecânico pelo cliente"],

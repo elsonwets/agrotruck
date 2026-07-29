@@ -24,8 +24,21 @@ const truckSchema = z.object({
   registration: z.string().min(3).max(40),
   acceptedMaterials: z.array(z.string()).min(1).max(30),
   serviceAreas: z.array(z.string()).min(1).max(30),
-  availability: z.enum(["available", "in_transit", "occupied", "maintenance"]),
+  driverName: z.string().max(120).optional(),
+  driverPhone: z.string().max(30).optional(),
+  apprenticeName: z.string().max(120).optional(),
+  apprenticePhone: z.string().max(30).optional(),
   terms: z.literal(true),
+}).superRefine((data, ctx) => {
+  if (data.accountType !== "company") return;
+  for (const [field, message] of [
+    ["driverName", "Indique o nome do motorista."],
+    ["driverPhone", "Indique o telefone do motorista."],
+    ["apprenticeName", "Indique o nome do ajudante."],
+    ["apprenticePhone", "Indique o telefone do ajudante."],
+  ] as const) {
+    if (!data[field]?.trim()) ctx.addIssue({ code: "custom", path: [field], message });
+  }
 });
 
 type ActionResult<T = undefined> = { success: true; data: T } | { success: false; error: string };
@@ -67,12 +80,17 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
       location: data.city,
       serviceAreas: data.serviceAreas,
       acceptedMaterials: data.acceptedMaterials,
-      availability: data.availability,
+      availability: "available",
       description: `Truck ${data.brand} ${data.model} de ${data.capacity} toneladas, disponível para contacto direto através da AgroTruck.`,
       images: [],
       restrictions: ["Condições e preço a confirmar diretamente com o proprietário"],
       verified: false,
       publicationStatus: "pending_payment",
+      isOnline: false,
+      driverName: data.accountType === "company" ? data.driverName : null,
+      driverPhone: data.accountType === "company" ? data.driverPhone : null,
+      apprenticeName: data.accountType === "company" ? data.apprenticeName : null,
+      apprenticePhone: data.accountType === "company" ? data.apprenticePhone : null,
     }).returning({ id: trucks.id, slug: trucks.slug });
     revalidatePath("/");
     revalidatePath("/trucks");
@@ -84,14 +102,16 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
   }
 }
 
-export async function updateTruckAvailability(registration: string, rawAvailability: string): Promise<ActionResult> {
-  const availability = z.enum(["available", "in_transit", "occupied", "maintenance"]).safeParse(rawAvailability);
+export async function updateTruckAvailability(truckId: string, rawAvailability: string): Promise<ActionResult> {
+  const id = z.uuid().safeParse(truckId);
+  const availability = z.enum(["available", "in_transit", "maintenance"]).safeParse(rawAvailability);
+  if (!id.success) return { success: false, error: "Truck inválido." };
   if (!availability.success) return { success: false, error: "Dados de disponibilidade inválidos." };
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) return { success: false, error: "A sua sessão expirou. Confirme novamente o seu email." };
     const db = requireDatabase();
-    const updated = await db.update(trucks).set({ availability: availability.data, updatedAt: new Date() }).where(and(eq(trucks.ownerId, session.user.id), eq(trucks.registration, registration.toUpperCase()))).returning({ id: trucks.id });
+    const updated = await db.update(trucks).set({ availability: availability.data, updatedAt: new Date() }).where(and(eq(trucks.ownerId, session.user.id), eq(trucks.id, id.data), eq(trucks.isOnline, true))).returning({ id: trucks.id });
     if (!updated[0]) return { success: false, error: "Truck não encontrado." };
     revalidatePath("/");
     revalidatePath("/trucks");
@@ -99,6 +119,62 @@ export async function updateTruckAvailability(registration: string, rawAvailabil
   } catch (error) {
     return { success: false, error: databaseError(error) };
   }
+}
+
+export async function setTruckOnline(truckId: string): Promise<ActionResult> {
+  const id = z.uuid().safeParse(truckId);
+  if (!id.success) return { success: false, error: "Truck inválido." };
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return { success: false, error: "A sua sessão expirou. Entre novamente." };
+    const updated = await requireDatabase().update(trucks).set({ isOnline: true, availability: "available", updatedAt: new Date() }).where(and(
+      eq(trucks.id, id.data),
+      eq(trucks.ownerId, session.user.id),
+      eq(trucks.verified, true),
+      eq(trucks.publicationStatus, "published"),
+    )).returning({ id: trucks.id });
+    if (!updated[0]) return { success: false, error: "A AgroTruck deve validar este truck antes de o colocar online." };
+    revalidateTruckPages();
+    return { success: true, data: undefined };
+  } catch (error) {
+    return { success: false, error: databaseError(error) };
+  }
+}
+
+const crewSchema = z.object({
+  truckId: z.uuid(),
+  driverName: z.string().min(2).max(120),
+  driverPhone: z.string().min(7).max(30),
+  apprenticeName: z.string().min(2).max(120),
+  apprenticePhone: z.string().min(7).max(30),
+});
+
+export async function updateTruckCrew(rawData: unknown): Promise<ActionResult> {
+  const parsed = crewSchema.safeParse(rawData);
+  if (!parsed.success) return { success: false, error: "Verifique os nomes e telefones da equipa." };
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return { success: false, error: "A sua sessão expirou. Entre novamente." };
+    const updated = await requireDatabase().update(trucks).set({
+      driverName: parsed.data.driverName,
+      driverPhone: parsed.data.driverPhone,
+      apprenticeName: parsed.data.apprenticeName,
+      apprenticePhone: parsed.data.apprenticePhone,
+      updatedAt: new Date(),
+    }).where(and(eq(trucks.id, parsed.data.truckId), eq(trucks.ownerId, session.user.id))).returning({ id: trucks.id });
+    if (!updated[0]) return { success: false, error: "Truck não encontrado." };
+    revalidatePath("/dashboard");
+    return { success: true, data: undefined };
+  } catch (error) {
+    return { success: false, error: databaseError(error) };
+  }
+}
+
+function revalidateTruckPages() {
+  revalidatePath("/");
+  revalidatePath("/trucks");
+  revalidatePath("/entreprises");
+  revalidatePath("/dashboard");
 }
 
 function slugify(value: string) {

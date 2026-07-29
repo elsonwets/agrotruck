@@ -22,6 +22,13 @@
       "when": 1785252925850,
       "tag": "0002_real_turbo",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785329921680,
+      "tag": "0003_friendly_maddog",
+      "breakpoints": true
     }
   ]
 }

@@ -80,6 +80,11 @@ export const trucks = pgTable("trucks", {
   restrictions: jsonb("restrictions").$type<string[]>().notNull().default([]),
   verified: boolean("verified").notNull().default(false),
   publicationStatus: text("publication_status").notNull().default("pending_payment"),
+  isOnline: boolean("is_online").notNull().default(false),
+  driverName: text("driver_name"),
+  driverPhone: text("driver_phone"),
+  apprenticeName: text("apprentice_name"),
+  apprenticePhone: text("apprentice_phone"),
   paymentConfirmedAt: timestamp("payment_confirmed_at", { withTimezone: true }),
   approvedAt: timestamp("approved_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -91,6 +96,7 @@ export const trucks = pgTable("trucks", {
   index("trucks_location_idx").on(table.location),
   index("trucks_availability_idx").on(table.availability),
   index("trucks_publication_status_idx").on(table.publicationStatus),
+  index("trucks_online_idx").on(table.isOnline),
 ]);
 
 export type DatabaseUser = typeof users.$inferSelect;

@@ -27,7 +27,12 @@ export const auth = betterAuth({
       companyName: { type: "string", required: false },
     },
   },
-  session: { modelName: "sessions" },
+  session: {
+    modelName: "sessions",
+    expiresIn: 60 * 60 * 24 * 365,
+    updateAge: 60 * 60 * 24,
+    cookieCache: { enabled: true, maxAge: 60 * 5 },
+  },
   account: { modelName: "accounts" },
   verification: { modelName: "verifications" },
   advanced: { database: { generateId: "uuid" } },

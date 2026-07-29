@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { AppProviders } from "@/components/providers/app-providers";
 import { getSiteUrl } from "@/lib/site-url";
+import { PwaRegister } from "@/components/pwa/pwa-register";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -23,14 +24,17 @@ export const metadata: Metadata = {
   openGraph: { title: "AgroTruck", description: "Trucks disponíveis. Contacto direto.", images: ["/brand/agrotruck-lockup.png"], type: "website", locale: "pt_GW" },
 };
 
+export const viewport = { themeColor: "#0B3D2E", colorScheme: "light" };
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt" suppressHydrationWarning>
       <body>
         <AppProviders>
           <AnimatedBackground />
+          <PwaRegister />
           <Navbar />
-          <main>{children}</main>
+          {children}
           <Footer />
         </AppProviders>
       </body>

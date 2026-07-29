@@ -20,8 +20,9 @@ export async function reviewTruckPublication(formData: FormData) {
   await requireDatabase().update(trucks).set(parsed.data.decision === "publish" ? {
     publicationStatus: "published", verified: true, paymentConfirmedAt: now, approvedAt: now, updatedAt: now,
   } : {
-    publicationStatus: "rejected", verified: false, updatedAt: now,
+    publicationStatus: "rejected", verified: false, isOnline: false, updatedAt: now,
   }).where(eq(trucks.id, parsed.data.truckId));
+  revalidatePath("/dashboard");
   revalidatePath("/");
   revalidatePath("/trucks");
   revalidatePath("/entreprises");
