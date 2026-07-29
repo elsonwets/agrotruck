@@ -8,11 +8,21 @@ import { db } from "@/db";
 import { accounts, sessions, users, verifications } from "@/db/schema";
 import { getSiteUrl } from "@/lib/site-url";
 
+const trustedOrigins = Array.from(new Set([
+  getSiteUrl(),
+  process.env.BETTER_AUTH_URL,
+  process.env.NEXT_PUBLIC_SITE_URL,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  "https://agrotruck.vercel.app",
+  "https://agrotruck-wets-projects.vercel.app",
+].filter((origin): origin is string => Boolean(origin))));
+
 export const auth = betterAuth({
   appName: "AgroTruck",
   baseURL: process.env.BETTER_AUTH_URL ?? getSiteUrl(),
   secret: process.env.BETTER_AUTH_SECRET ?? process.env.VERIFICATION_CODE_SECRET,
-  trustedOrigins: [getSiteUrl()],
+  trustedOrigins,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: { users, sessions, accounts, verifications },
