@@ -10,7 +10,6 @@ import { trucks, users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 const truckSchema = z.object({
-  accountType: z.enum(["particulier", "company"]),
   name: z.string().min(2).max(120),
   phone: z.string().min(7).max(30),
   whatsapp: z.string().min(7).max(30),
@@ -29,19 +28,24 @@ const truckSchema = z.object({
   apprenticeName: z.string().max(120).optional(),
   apprenticePhone: z.string().max(30).optional(),
   terms: z.literal(true),
-}).superRefine((data, ctx) => {
-  if (data.accountType !== "company") return;
-  for (const [field, message] of [
-    ["driverName", "Indique o nome do motorista."],
-    ["driverPhone", "Indique o telefone do motorista."],
-    ["apprenticeName", "Indique o nome do ajudante."],
-    ["apprenticePhone", "Indique o telefone do ajudante."],
-  ] as const) {
-    if (!data[field]?.trim()) ctx.addIssue({ code: "custom", path: [field], message });
-  }
 });
 
 type ActionResult<T = undefined> = { success: true; data: T } | { success: false; error: string };
+
+export async function configureOwnerType(rawType: unknown): Promise<ActionResult<{ accountType: "individual" | "company" }>> {
+  const accountType = z.enum(["individual", "company"]).safeParse(rawType);
+  if (!accountType.success) return { success: false, error: "Escolha Particular ou Empresa." };
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, error: "Entre na sua conta para continuar." };
+  const db = requireDatabase();
+  const [current] = await db.select({ configured: users.accountTypeConfigured, accountType: users.accountType }).from(users).where(eq(users.id, session.user.id)).limit(1);
+  if (!current) return { success: false, error: "Conta não encontrada." };
+  if (current.configured) return { success: true, data: { accountType: current.accountType === "company" ? "company" : "individual" } };
+  await db.update(users).set({ accountType: accountType.data, accountTypeConfigured: true, updatedAt: new Date() }).where(eq(users.id, session.user.id));
+  revalidatePath("/devenir-partenaire");
+  revalidatePath("/dashboard");
+  return { success: true, data: { accountType: accountType.data } };
+}
 
 export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: string; slug: string }>> {
   const parsed = truckSchema.safeParse(rawData);
@@ -49,22 +53,27 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
   const data = parsed.data;
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) return { success: false, error: "Confirme o seu email antes de cadastrar um truck." };
+    if (!session) return { success: false, error: "Entre na sua conta antes de cadastrar um truck." };
     if (session.user.email.toLowerCase() !== data.email.toLowerCase()) {
       return { success: false, error: "O email do formulário não corresponde à conta autenticada." };
     }
     const db = requireDatabase();
+    const [owner] = await db.select({ accountType: users.accountType, configured: users.accountTypeConfigured }).from(users).where(eq(users.id, session.user.id)).limit(1);
+    if (!owner?.configured) return { success: false, error: "Escolha primeiro o seu perfil Particular ou Empresa." };
+    const isCompany = owner.accountType === "company";
+    if (isCompany && [data.driverName, data.driverPhone, data.apprenticeName, data.apprenticePhone].some((value) => !value?.trim())) {
+      return { success: false, error: "Indique o motorista, o ajudante e os respetivos telefones." };
+    }
     const [{ value: truckCount }] = await db.select({ value: count() }).from(trucks).where(eq(trucks.ownerId, session.user.id));
-    if (data.accountType === "particulier" && truckCount >= 5) {
-      return { success: false, error: "O plano Particular permite no máximo 5 trucks. Escolha o plano Empresa para adicionar mais." };
+    if (!isCompany && truckCount >= 5) {
+      return { success: false, error: "O perfil Particular permite no máximo 5 trucks." };
     }
     await db.update(users).set({
-      accountType: data.accountType === "company" ? "company" : "individual",
       name: data.name,
       phone: data.phone,
       whatsapp: data.whatsapp,
       city: data.city,
-      companyName: data.accountType === "company" ? data.companyName : null,
+      companyName: isCompany ? data.companyName : null,
       updatedAt: new Date(),
     }).where(eq(users.id, session.user.id));
     const slug = `${slugify(`${data.brand}-${data.model}`)}-${randomInt(1000, 10000)}`;
@@ -87,10 +96,10 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
       verified: false,
       publicationStatus: "pending_payment",
       isOnline: false,
-      driverName: data.accountType === "company" ? data.driverName : null,
-      driverPhone: data.accountType === "company" ? data.driverPhone : null,
-      apprenticeName: data.accountType === "company" ? data.apprenticeName : null,
-      apprenticePhone: data.accountType === "company" ? data.apprenticePhone : null,
+      driverName: isCompany ? data.driverName : null,
+      driverPhone: isCompany ? data.driverPhone : null,
+      apprenticeName: isCompany ? data.apprenticeName : null,
+      apprenticePhone: isCompany ? data.apprenticePhone : null,
     }).returning({ id: trucks.id, slug: trucks.slug });
     revalidatePath("/");
     revalidatePath("/trucks");

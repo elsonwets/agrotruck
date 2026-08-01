@@ -5,15 +5,19 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   accountType: text("account_type").notNull().default("individual"),
+  accountTypeConfigured: boolean("account_type_configured").notNull().default(false),
+  role: text("role").notNull().default("user"),
   name: text("name").notNull().default(""),
   image: text("image"),
   phone: text("phone"),
+  phoneNumber: text("phone_number"),
+  phoneNumberVerified: boolean("phone_number_verified").notNull().default(false),
   whatsapp: text("whatsapp"),
   city: text("city"),
   companyName: text("company_name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [index("users_email_idx").on(table.email)]);
+}, (table) => [index("users_email_idx").on(table.email), uniqueIndex("users_phone_number_unique").on(table.phoneNumber)]);
 
 export const sessions = pgTable("sessions", {
   id: uuid("id").defaultRandom().primaryKey(),

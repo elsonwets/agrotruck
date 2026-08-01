@@ -2,11 +2,12 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { emailOTP } from "better-auth/plugins";
+import { emailOTP, phoneNumber } from "better-auth/plugins";
 import { Resend } from "resend";
 import { db } from "@/db";
 import { accounts, sessions, users, verifications } from "@/db/schema";
 import { getSiteUrl } from "@/lib/site-url";
+import { sendWhatsAppOtp } from "@/lib/whatsapp-otp";
 
 const trustedOrigins = Array.from(new Set([
   getSiteUrl(),
@@ -31,6 +32,8 @@ export const auth = betterAuth({
     modelName: "users",
     additionalFields: {
       accountType: { type: "string", required: false, defaultValue: "individual", input: false },
+      accountTypeConfigured: { type: "boolean", required: false, defaultValue: false, input: false },
+      role: { type: "string", required: false, defaultValue: "user", input: false },
       phone: { type: "string", required: false },
       whatsapp: { type: "string", required: false },
       city: { type: "string", required: false },
@@ -63,6 +66,19 @@ export const auth = betterAuth({
           html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#111"><h1 style="color:#0B3D2E">AgroTruck</h1><p>Use o código abaixo para entrar na sua conta:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#0B3D2E">${otp}</p><p>Este código expira em 10 minutos. Se não pediu este acesso, ignore esta mensagem.</p></div>`,
         });
         if (result.error) throw new Error(result.error.message);
+      },
+    }),
+    phoneNumber({
+      otpLength: 6,
+      expiresIn: 600,
+      allowedAttempts: 5,
+      phoneNumberValidator: (value) => /^\+[1-9]\d{7,14}$/.test(value),
+      async sendOTP({ phoneNumber: value, code }) {
+        await sendWhatsAppOtp(value, code);
+      },
+      signUpOnVerification: {
+        getTempEmail: (value) => `${value.replace(/\D/g, "")}@phone.agrotruck.local`,
+        getTempName: (value) => value,
       },
     }),
     nextCookies(),
