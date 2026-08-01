@@ -10,12 +10,6 @@ import { trucks, users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 const truckSchema = z.object({
-  name: z.string().min(2).max(120),
-  phone: z.string().min(7).max(30),
-  whatsapp: z.string().min(7).max(30),
-  email: z.email(),
-  city: z.string().min(1).max(100),
-  companyName: z.string().max(160).optional(),
   truckType: z.enum(["flatbed", "dump_truck", "cargo", "container", "trailer", "canter"]),
   brand: z.string().min(2).max(80),
   model: z.string().min(1).max(100),
@@ -54,13 +48,13 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) return { success: false, error: "Entre na sua conta antes de cadastrar um truck." };
-    if (session.user.email.toLowerCase() !== data.email.toLowerCase()) {
-      return { success: false, error: "O email do formulário não corresponde à conta autenticada." };
-    }
     const db = requireDatabase();
-    const [owner] = await db.select({ accountType: users.accountType, configured: users.accountTypeConfigured }).from(users).where(eq(users.id, session.user.id)).limit(1);
+    const [owner] = await db.select({ accountType: users.accountType, configured: users.accountTypeConfigured, name: users.name, phone: users.phone, whatsapp: users.whatsapp, city: users.city, companyName: users.companyName }).from(users).where(eq(users.id, session.user.id)).limit(1);
     if (!owner?.configured) return { success: false, error: "Escolha primeiro o seu perfil Particular ou Empresa." };
     const isCompany = owner.accountType === "company";
+    if (!owner.name?.trim() || !owner.phone?.trim() || !owner.whatsapp?.trim() || !owner.city?.trim() || (isCompany && !owner.companyName?.trim())) {
+      return { success: false, error: "Complete uma única vez os contactos da sua conta antes de cadastrar um truck." };
+    }
     if (isCompany && [data.driverName, data.driverPhone, data.apprenticeName, data.apprenticePhone].some((value) => !value?.trim())) {
       return { success: false, error: "Indique o motorista, o ajudante e os respetivos telefones." };
     }
@@ -68,14 +62,6 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
     if (!isCompany && truckCount >= 5) {
       return { success: false, error: "O perfil Particular permite no máximo 5 trucks." };
     }
-    await db.update(users).set({
-      name: data.name,
-      phone: data.phone,
-      whatsapp: data.whatsapp,
-      city: data.city,
-      companyName: isCompany ? data.companyName : null,
-      updatedAt: new Date(),
-    }).where(eq(users.id, session.user.id));
     const slug = `${slugify(`${data.brand}-${data.model}`)}-${randomInt(1000, 10000)}`;
     const inserted = await db.insert(trucks).values({
       ownerId: session.user.id,
@@ -86,7 +72,7 @@ export async function createTruck(rawData: unknown): Promise<ActionResult<{ id: 
       type: data.truckType,
       capacityTons: data.capacity,
       registration: data.registration.toUpperCase(),
-      location: data.city,
+      location: owner.city,
       serviceAreas: data.serviceAreas,
       acceptedMaterials: data.acceptedMaterials,
       availability: "available",
