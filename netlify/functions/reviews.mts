@@ -5,7 +5,8 @@ type StoredReview = Scores & { visitorId: string; updatedAt: string };
 
 const handler = async (request: Request) => {
   const url = new URL(request.url);
-  const slug = clean(url.searchParams.get("slug"));
+  const pathSlug = url.pathname.split("/").filter(Boolean).at(-1);
+  const slug = clean(url.searchParams.get("slug") ?? (pathSlug === "reviews" ? null : pathSlug));
   if (!slug) return json({ error: "Annonce invalide" }, 400);
   if (request.method === "GET") return json(await aggregate(slug));
   if (request.method !== "POST") return json({ error: "Méthode non autorisée" }, 405);

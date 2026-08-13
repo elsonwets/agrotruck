@@ -16,5 +16,5 @@
 
 [[redirects]]
   from = "/api/reviews/:slug"
-  to = "/.netlify/functions/reviews?slug=:slug"
+  to = "/.netlify/functions/reviews/:slug"
   status = 200
