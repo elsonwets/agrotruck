@@ -19,7 +19,7 @@ export function TruckRating({ ratings: baseRatings, slug, detailed = false, clas
 
   useEffect(() => {
     if (!detailed) return;
-    fetch(`/api/reviews?slug=${encodeURIComponent(slug)}`).then((response) => response.ok ? response.json() : null).then(setVisitorRatings).catch(() => undefined);
+    fetch(`/.netlify/functions/reviews?slug=${encodeURIComponent(slug)}`).then((response) => response.ok ? response.json() : null).then(setVisitorRatings).catch(() => undefined);
     const saved = localStorage.getItem(`agrotruck-review:${slug}`);
     if (saved) {
       try { const parsed = JSON.parse(saved) as Scores; queueMicrotask(() => setScores(parsed)); } catch { /* Ignore invalid local data. */ }
@@ -42,7 +42,7 @@ export function TruckRating({ ratings: baseRatings, slug, detailed = false, clas
     let visitorId = localStorage.getItem("agrotruck-visitor-id");
     if (!visitorId) { visitorId = crypto.randomUUID(); localStorage.setItem("agrotruck-visitor-id", visitorId); }
     try {
-      const response = await fetch(`/api/reviews?slug=${encodeURIComponent(slug)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ visitorId, ...scores, website: "" }) });
+      const response = await fetch(`/.netlify/functions/reviews?slug=${encodeURIComponent(slug)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ visitorId, ...scores, website: "" }) });
       if (!response.ok) throw new Error("save failed");
       setVisitorRatings(await response.json());
       localStorage.setItem(`agrotruck-review:${slug}`, JSON.stringify(scores));
