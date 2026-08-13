@@ -5,9 +5,9 @@ import { ArrowLeft, BadgeCheck, Building2, Check, MapPin, PackageOpen, Scale, Tr
 import { CallButton } from "@/components/shared/call-button";
 import { WhatsappButton } from "@/components/shared/whatsapp-button";
 import { TruckGrid } from "@/components/trucks/truck-grid";
-import { findCompanyBySlug } from "@/db/queries";
+import { findCompanyBySlug, listCompanies } from "@/lib/truck-directory";
 
-export const dynamic = "force-dynamic";
+export async function generateStaticParams() { return (await listCompanies()).map(({ slug }) => ({ slug })); }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> { const company = await findCompanyBySlug((await params).slug); return { title: company?.name ?? "Empresa não encontrada", description: company ? `Consulte os trucks de ${company.name} disponíveis na AgroTruck.` : undefined }; }
 

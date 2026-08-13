@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BadgeCheck, Building2, Check, Info, MapPin, Scale, Truck as TruckIcon, UserRound } from "lucide-react";
-import { findTruckBySlug } from "@/db/queries";
+import { findTruckBySlug, listTrucks } from "@/lib/truck-directory";
 import { truckTypeLabels } from "@/types/truck";
 import { TruckGallery } from "@/components/trucks/truck-gallery";
 import { TruckStatusBadge } from "@/components/trucks/truck-status-badge";
 import { TruckContactActions } from "@/components/trucks/truck-contact-actions";
 import { companySlug } from "@/lib/companies";
+import { TruckRating } from "@/components/trucks/truck-rating";
 
-export const dynamic = "force-dynamic";
+export async function generateStaticParams() { return (await listTrucks()).map(({ slug }) => ({ slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const truck = await findTruckBySlug((await params).slug);
   return { title: truck?.name ?? "Truck não encontrado", description: truck?.description };
@@ -38,6 +39,7 @@ export default async function TruckDetailPage({ params }: { params: Promise<{ sl
             <List title="Zonas de serviço" values={truck.serviceAreas} />
             <List title="Mercadorias aceites" values={truck.acceptedMaterials} />
           </section>
+          <TruckRating ratings={truck.ratings} slug={truck.slug} detailed className="mt-10" />
           <section className="mt-10 rounded-[20px] border border-warning/35 bg-warning/8 p-6">
             <div className="flex items-center gap-2 text-foreground"><Info className="size-5 text-[#9b7d00]" /><h2 className="font-heading text-xl font-semibold">Antes de carregar</h2></div>
             <p className="mt-3 text-sm font-light leading-6 text-muted-foreground">Confirme o preço, o horário, os acessos e todas as condições diretamente com o proprietário.</p>
