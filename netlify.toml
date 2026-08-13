@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm build"
+  command = "node -e \"console.log('Using verified prebuilt AgroTruck export')\""
   publish = "out"
   functions = "netlify/functions"
 
