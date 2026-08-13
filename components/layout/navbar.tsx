@@ -9,7 +9,7 @@ import { MobileNavigation } from "./mobile-navigation";
 import { HeaderControls } from "./header-controls";
 import { truckRegistrationWhatsappUrl } from "@/lib/contact";
 
-const links = [["nav.companies", "/entreprises"], ["nav.how", "/comment-ca-marche"], ["nav.about", "/about"]] as const;
+const links = [["nav.rental", "/location"], ["nav.sale", "/vente"], ["nav.companies", "/entreprises"], ["nav.how", "/comment-ca-marche"], ["nav.about", "/about"]] as const;
 
 export function Navbar() {
   const { t } = useAppSettings();

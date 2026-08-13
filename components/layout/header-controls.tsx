@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Globe2, Moon, Sun } from "lucide-react";
+import { Check, Globe2 } from "lucide-react";
 import { useRef } from "react";
 import { type Language, useAppSettings } from "@/components/providers/app-providers";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ const languages: { code: Language; short: string; label: string }[] = [
 ];
 
 export function HeaderControls({ className, compact = false }: { className?: string; compact?: boolean }) {
-  const { language, setLanguage, theme, toggleTheme, t } = useAppSettings();
+  const { language, setLanguage, t } = useAppSettings();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   return <div className={cn("flex items-center gap-2", className)}>
     <details ref={detailsRef} className="group relative">
@@ -25,8 +25,5 @@ export function HeaderControls({ className, compact = false }: { className?: str
         </button>)}
       </div>
     </details>
-    <button type="button" onClick={toggleTheme} className="theme-control focus-ring grid size-10 place-items-center rounded-xl border border-primary/15 bg-white text-primary shadow-sm transition hover:border-primary/30" aria-label={theme === "light" ? t("controls.themeDark") : t("controls.themeLight")} title={theme === "light" ? t("controls.themeDark") : t("controls.themeLight")}>
-      {theme === "light" ? <Moon className="size-4"/> : <Sun className="size-4"/>}
-    </button>
   </div>;
 }

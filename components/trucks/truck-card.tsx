@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Building2, MapPin, Package, Scale, UserRound } from "lucide-react";
 import type { Truck } from "@/types/truck";
-import { truckTypeLabels } from "@/types/truck";
+import { listingModeLabels, truckTypeLabels } from "@/types/truck";
 import { WhatsappButton } from "@/components/shared/whatsapp-button";
 import { CallButton } from "@/components/shared/call-button";
 import { companySlug } from "@/lib/companies";
@@ -17,7 +17,7 @@ export function TruckCard({ truck }: { truck: Truck }) {
     <Link href={`/trucks/${truck.slug}`} className="focus-ring relative block aspect-[16/9] overflow-hidden" aria-label={`Ver detalhes de ${truck.name}`}>
       <Image src={truck.images[0]} alt={`${truck.name} em ${truck.location}`} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 560px" className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.018]"/>
       <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"/>
-      <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3"><span className="rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-bold text-primary shadow-sm backdrop-blur">{truckTypeLabels[truck.type]}</span><TruckStatusBadge status={truck.availability}/></div>
+      <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3"><div className="flex flex-wrap gap-2"><span className="rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-bold text-primary shadow-sm backdrop-blur">{truckTypeLabels[truck.type]}</span><span className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold text-white shadow-sm ${truck.listingMode === "sale" ? "bg-danger" : truck.listingMode === "rental" ? "bg-[#b87400]" : "bg-primary"}`}>{listingModeLabels[truck.listingMode]}</span></div><TruckStatusBadge status={truck.availability}/></div>
     </Link>
     <div className="p-5 md:p-6">
       <div className="flex items-start justify-between gap-4"><div className="min-w-0"><h3 className="font-heading text-xl font-bold tracking-[-.025em] text-[#111111] md:text-2xl"><Link href={`/trucks/${truck.slug}`} className="focus-ring hover:text-primary">{truck.name}</Link></h3><p className="mt-1.5 flex items-center gap-1.5 text-sm text-[#667069]">{truck.companyName ? <Building2 className="size-4"/> : <UserRound className="size-4"/>}{truck.companyName ? <Link href={`/entreprises/${companySlug(truck.companyName)}`} className="focus-ring hover:text-primary">{truck.companyName}</Link> : truck.ownerName}</p></div><Link href={`/trucks/${truck.slug}`} aria-label={`Ver ficha de ${truck.name}`} className="focus-ring grid size-9 shrink-0 place-items-center rounded-full border border-primary/10 text-primary transition hover:bg-primary hover:text-white"><ArrowUpRight className="size-4" /></Link></div>
