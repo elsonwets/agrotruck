@@ -1,7 +1,13 @@
 export type TruckAvailability = "available" | "in_transit" | "maintenance";
-export type TruckPublicationStatus = "pending_payment" | "published" | "rejected";
-
 export type TruckType = "flatbed" | "dump_truck" | "cargo" | "container" | "trailer" | "canter";
+
+export interface TruckRatings {
+  overall: number;
+  vehicleQuality: number;
+  professionalism: number;
+  reliability: number;
+  reviewCount: number;
+}
 
 export interface Truck {
   id: string;
@@ -25,16 +31,7 @@ export interface Truck {
   images: string[];
   verified: boolean;
   restrictions: string[];
-}
-
-export interface OwnerTruck extends Truck {
-  registration: string;
-  publicationStatus: TruckPublicationStatus;
-  isOnline: boolean;
-  driverName?: string;
-  driverPhone?: string;
-  apprenticeName?: string;
-  apprenticePhone?: string;
+  ratings?: TruckRatings;
 }
 
 export const truckTypeLabels: Record<TruckType, string> = {

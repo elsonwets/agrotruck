@@ -5,7 +5,7 @@ import { ArrowLeft, BadgeCheck, Building2, Check, MapPin, PackageOpen, Scale, Tr
 import { CallButton } from "@/components/shared/call-button";
 import { WhatsappButton } from "@/components/shared/whatsapp-button";
 import { TruckGrid } from "@/components/trucks/truck-grid";
-import { findCompanyBySlug } from "@/db/queries";
+import { findCompanyBySlug } from "@/lib/truck-directory";
 
 export const dynamic = "force-dynamic";
 

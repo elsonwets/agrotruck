@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Building2, CheckCircle2, Truck } from "lucide-react";
 import { CompaniesBrowser } from "@/components/companies/companies-browser";
-import { listCompanies } from "@/db/queries";
+import { listCompanies } from "@/lib/truck-directory";
 
 export const metadata: Metadata = { title: "Empresas de transporte", description: "Descubra empresas de transporte e consulte os trucks disponíveis em cada frota." };
 export const dynamic = "force-dynamic";

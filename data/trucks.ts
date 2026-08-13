@@ -16,6 +16,7 @@ export const trucks: Truck[] = [
     ownerName: "Mamadú Baldé", companyName: "TransGuiné Logística", ownerType: "company", phone: "+245 955 123 456", whatsapp: "+245955123456",
     description: "Plataforma de longa distância, preparada para produtos agrícolas, paletes e materiais de construção.", images: [images.road, images.freight, images.fleet], verified: true,
     restrictions: ["Carga devidamente acondicionada", "Peso a confirmar antes da partida"],
+    ratings: { overall: 4.8, vehicleQuality: 4.7, professionalism: 4.9, reliability: 4.8, reviewCount: 36 },
   },
   {
     id: "trk-002", slug: "mercedes-actros-benne", name: "Mercedes Actros Benne", brand: "Mercedes-Benz", model: "Actros 3340", type: "dump_truck", capacityTons: 25,
@@ -23,6 +24,7 @@ export const trucks: Truck[] = [
     ownerName: "Ibrahima Djaló", ownerType: "individual", phone: "+245 966 408 210", whatsapp: "+245966408210",
     description: "Basculante robusta para obras, pedreiras e fornecimento de materiais a granel.", images: [images.fleet, images.highway], verified: true,
     restrictions: ["Sem resíduos perigosos", "Acesso ao estaleiro obrigatório"],
+    ratings: { overall: 4.5, vehicleQuality: 4.6, professionalism: 4.5, reliability: 4.4, reviewCount: 18 },
   },
   {
     id: "trk-003", slug: "man-tgx-porte-conteneur", name: "MAN TGX Porte-conteneur", brand: "MAN", model: "TGX 18.440", type: "container", capacityTons: 30,
@@ -30,6 +32,7 @@ export const trucks: Truck[] = [
     ownerName: "Fatumata Indjai", companyName: "Nô Karga SARL", ownerType: "company", phone: "+245 955 880 412", whatsapp: "+245955880412",
     description: "Porta-contentor disponível para levantamentos no porto e distribuição regional.", images: [images.port, images.road], verified: true,
     restrictions: ["Documentos portuários obrigatórios", "Contentores de 20 ou 40 pés"],
+    ratings: { overall: 4.9, vehicleQuality: 4.9, professionalism: 4.8, reliability: 5, reviewCount: 42 },
   },
   {
     id: "trk-004", slug: "volvo-fh-semi-remorque", name: "Volvo FH Semi-remorque", brand: "Volvo", model: "FH 460", type: "trailer", capacityTons: 35,
@@ -37,6 +40,7 @@ export const trucks: Truck[] = [
     ownerName: "João Có", companyName: "Kaminhu Forte", ownerType: "company", phone: "+245 966 771 300", whatsapp: "+245966771300",
     description: "Conjunto de grande capacidade para fluxos agrícolas regionais e ligações interurbanas.", images: [images.highway, images.freight], verified: true,
     restrictions: ["Apenas mercadoria seca", "Cobertura obrigatória na época das chuvas"],
+    ratings: { overall: 4.6, vehicleQuality: 4.7, professionalism: 4.6, reliability: 4.5, reviewCount: 27 },
   },
   {
     id: "trk-005", slug: "mitsubishi-canter-cargo", name: "Mitsubishi Canter", brand: "Mitsubishi", model: "Fuso Canter", type: "canter", capacityTons: 7,
@@ -44,6 +48,7 @@ export const trucks: Truck[] = [
     ownerName: "Abulai Sanhá", ownerType: "individual", phone: "+245 955 342 888", whatsapp: "+245955342888",
     description: "Camião compacto para recolhas, mercados e entregas em estradas secundárias.", images: [images.cargo, images.road], verified: false,
     restrictions: ["Volume máximo a confirmar", "Sem carga abrasiva a granel"],
+    ratings: { overall: 4.3, vehicleQuality: 4.2, professionalism: 4.5, reliability: 4.3, reviewCount: 11 },
   },
   {
     id: "trk-006", slug: "iveco-trakker-benne", name: "Iveco Trakker Benne", brand: "Iveco", model: "Trakker 380", type: "dump_truck", capacityTons: 28,
@@ -51,6 +56,7 @@ export const trucks: Truck[] = [
     ownerName: "Carlos Gomes", companyName: "Obra Norte", ownerType: "company", phone: "+245 966 119 540", whatsapp: "+245966119540",
     description: "Basculante reforçada para obras públicas e abastecimento de estaleiros.", images: [images.fleet, images.highway], verified: true,
     restrictions: ["Distância avaliada conforme a estrada", "Carregamento mecânico pelo cliente"],
+    ratings: { overall: 4.7, vehicleQuality: 4.8, professionalism: 4.7, reliability: 4.6, reviewCount: 24 },
   },
   {
     id: "trk-007", slug: "renault-premium-fourgon", name: "Renault Premium Fourgon", brand: "Renault Trucks", model: "Premium 280", type: "cargo", capacityTons: 12,
@@ -58,6 +64,7 @@ export const trucks: Truck[] = [
     ownerName: "Adama Mané", ownerType: "individual", phone: "+245 955 602 744", whatsapp: "+245955602744",
     description: "Carga fechada para proteger mercadorias da chuva e da poeira.", images: [images.freight, images.cargo], verified: true,
     restrictions: ["Sem matérias líquidas", "Carga paletizada recomendada"],
+    ratings: { overall: 4.4, vehicleQuality: 4.3, professionalism: 4.6, reliability: 4.3, reviewCount: 15 },
   },
   {
     id: "trk-008", slug: "daf-xf-plateau", name: "DAF XF Plateau", brand: "DAF", model: "XF 105", type: "flatbed", capacityTons: 30,
@@ -65,6 +72,7 @@ export const trucks: Truck[] = [
     ownerName: "Binta Cassamá", companyName: "Bolama Transit", ownerType: "company", phone: "+245 966 930 011", whatsapp: "+245966930011",
     description: "Plataforma versátil para materiais compridos, madeira e mercadorias volumosas.", images: [images.road, images.port], verified: true,
     restrictions: ["Dimensões especiais sob consulta", "Grua não incluída"],
+    ratings: { overall: 4.6, vehicleQuality: 4.5, professionalism: 4.7, reliability: 4.6, reviewCount: 21 },
   },
 ];
 

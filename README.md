@@ -1,6 +1,6 @@
 # AgroTruck
 
-Plateforme Next.js de mise en relation entre les personnes qui recherchent un truck disponible et les propriétaires de trucks en Guinée-Bissau et au Sénégal.
+Annuaire public de camions en Guinée-Bissau et au Sénégal. Le site est en lecture seule : il affiche les véhicules fournis par une API externe et permet de contacter directement le propriétaire par téléphone ou WhatsApp.
 
 ## Développement
 
@@ -9,34 +9,61 @@ pnpm install
 pnpm dev
 ```
 
-L’application est ensuite disponible sur `http://localhost:3000`.
+L’application est disponible sur `http://localhost:3000`. Sans configuration API, les données de démonstration de `data/trucks.ts` sont utilisées.
 
-## Base de données Neon
+## API externe
 
-Le projet utilise Neon Postgres avec Drizzle ORM et le pilote serverless HTTP.
+Ajoutez ces variables dans `.env.local` :
 
-1. Dans le dashboard Neon, utilisez **Connect** et copiez la chaîne de connexion.
-2. Copiez `.env.example` vers `.env.local`.
-3. Renseignez `DATABASE_URL` et une valeur aléatoire longue pour `VERIFICATION_CODE_SECRET`.
-4. Appliquez le schéma puis chargez les huit trucks de démonstration :
-
-```bash
-pnpm db:migrate
-pnpm db:seed
+```env
+AGROTRUCK_DIRECTORY_API_URL=https://api.votre-domaine.com/public/trucks
+AGROTRUCK_DIRECTORY_API_TOKEN=
+AGROTRUCK_DIRECTORY_REVALIDATE_SECONDS=300
 ```
 
-Commandes disponibles :
+Le jeton est facultatif et reste côté serveur. L’API peut répondre avec un tableau, `{ "data": [...] }` ou `{ "trucks": [...] }`.
 
-```bash
-pnpm db:generate  # générer une migration après modification du schéma
-pnpm db:migrate   # appliquer les migrations à Neon
-pnpm db:push      # synchronisation directe, réservée au développement
-pnpm db:seed      # charger les données de démonstration
+Chaque camion suit ce contrat JSON :
+
+```json
+{
+  "id": "trk-001",
+  "slug": "scania-r450-plateau",
+  "name": "Scania R450 Plateau",
+  "brand": "Scania",
+  "model": "R450",
+  "type": "flatbed",
+  "capacityTons": 32,
+  "location": "Bissau",
+  "serviceAreas": ["Bissau", "Bafatá"],
+  "acceptedMaterials": ["Produits agricoles"],
+  "availability": "available",
+  "ownerName": "Mamadú Baldé",
+  "companyName": "TransGuiné Logística",
+  "ownerType": "company",
+  "phone": "+245 955 123 456",
+  "whatsapp": "+245955123456",
+  "description": "Plateau longue distance.",
+  "images": ["https://cdn.votre-domaine.com/trucks/001.jpg"],
+  "verified": true,
+  "restrictions": ["Poids à confirmer"],
+  "ratings": {
+    "overall": 4.8,
+    "vehicleQuality": 4.7,
+    "professionalism": 4.9,
+    "reliability": 4.8,
+    "reviewCount": 36
+  }
+}
 ```
 
-La connexion peut être vérifiée sur `/api/health/database`. Cet endpoint ne retourne jamais la chaîne de connexion.
+Valeurs autorisées :
 
-Les données statiques restent utilisées comme fallback local quand `DATABASE_URL` n’est pas définie.
+- `type` : `flatbed`, `dump_truck`, `cargo`, `container`, `trailer`, `canter`
+- `availability` : `available`, `in_transit`, `maintenance`
+- les notes sont comprises entre 0 et 5
+
+Sans URL d’API, le site utilise les données de démonstration pour le développement local. Si une API configurée est indisponible ou renvoie un format invalide, aucun faux camion n’est publié et l’erreur est écrite dans les logs serveur.
 
 ## Vérifications
 
