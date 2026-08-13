@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BadgeCheck, Building2, Check, Info, MapPin, Scale, Truck as TruckIcon, UserRound } from "lucide-react";
-import { findTruckBySlug } from "@/lib/truck-directory";
+import { findTruckBySlug, listTrucks } from "@/lib/truck-directory";
 import { truckTypeLabels } from "@/types/truck";
 import { TruckGallery } from "@/components/trucks/truck-gallery";
 import { TruckStatusBadge } from "@/components/trucks/truck-status-badge";
@@ -10,7 +10,7 @@ import { TruckContactActions } from "@/components/trucks/truck-contact-actions";
 import { companySlug } from "@/lib/companies";
 import { TruckRating } from "@/components/trucks/truck-rating";
 
-export const dynamic = "force-dynamic";
+export async function generateStaticParams() { return (await listTrucks()).map(({ slug }) => ({ slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const truck = await findTruckBySlug((await params).slug);
   return { title: truck?.name ?? "Truck não encontrado", description: truck?.description };
