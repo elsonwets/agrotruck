@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { AppProviders } from "@/components/providers/app-providers";
 import { getSiteUrl } from "@/lib/site-url";
 import { PwaRegister } from "@/components/pwa/pwa-register";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Navbar />
           {children}
           <Footer />
+          <Analytics />
         </AppProviders>
       </body>
     </html>
