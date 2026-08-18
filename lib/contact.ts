@@ -4,5 +4,5 @@ export const agroTruckWhatsapp = process.env.NEXT_PUBLIC_AGROTRUCK_WHATSAPP ?? "
 
 export const truckRegistrationWhatsappUrl = whatsappUrl(
   agroTruckWhatsapp,
-  "Olá, quero cadastrar um camião no anuário AgroTruck.",
+  "Olá, gostaria de me tornar parceiro da AgroTrucks by Badora.",
 );

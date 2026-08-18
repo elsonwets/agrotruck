@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BadgeCheck, Building2, Check, Info, MapPin, Scale, Truck as TruckIcon, UserRound } from "lucide-react";
+import { ArrowLeft, Check, Info, MapPin, Scale, Truck as TruckIcon } from "lucide-react";
 import { findTruckBySlug, listTrucks } from "@/lib/truck-directory";
 import { truckTypeLabels } from "@/types/truck";
 import { TruckGallery } from "@/components/trucks/truck-gallery";
 import { TruckStatusBadge } from "@/components/trucks/truck-status-badge";
 import { TruckContactActions } from "@/components/trucks/truck-contact-actions";
-import { companySlug } from "@/lib/companies";
 import { TruckRating } from "@/components/trucks/truck-rating";
 
 export async function generateStaticParams() { return (await listTrucks()).map(({ slug }) => ({ slug })); }
@@ -26,7 +25,7 @@ export default async function TruckDetailPage({ params }: { params: Promise<{ sl
         <div>
           <TruckGallery images={truck.images} name={truck.name} />
           <section className="mt-8">
-            <div className="flex flex-wrap items-center gap-3"><TruckStatusBadge status={truck.availability} />{truck.verified && <span className="flex items-center gap-1 text-xs font-semibold text-primary"><BadgeCheck className="size-4" /> Perfil verificado</span>}</div>
+            <div className="flex flex-wrap items-center gap-3"><TruckStatusBadge status={truck.availability} /></div>
             <h1 className="mt-4 font-heading text-4xl font-extrabold tracking-[-.04em] text-foreground md:text-5xl">{truck.name}</h1>
             <p className="mt-4 max-w-3xl font-light leading-7 text-muted-foreground">{truck.description}</p>
             <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -49,12 +48,11 @@ export default async function TruckDetailPage({ params }: { params: Promise<{ sl
         <aside>
           <div className="sticky top-28 rounded-[20px] border border-primary/10 bg-white p-6 shadow-[0_18px_50px_rgba(17,17,17,.07)]">
             <p className="text-[11px] font-bold uppercase tracking-[.16em] text-danger">Contacto direto</p>
-            <div className="mt-4 flex items-center gap-3"><span className="grid size-12 place-items-center rounded-full bg-primary/8">{truck.companyName ? <Building2 className="text-primary" /> : <UserRound className="text-primary" />}</span><div><h2 className="font-heading text-lg font-semibold text-foreground">{truck.companyName ? <Link href={`/entreprises/${companySlug(truck.companyName)}`} className="focus-ring hover:text-primary">{truck.companyName}</Link> : truck.ownerName}</h2>{truck.companyName && <p className="text-xs text-muted-foreground">{truck.ownerName} · <Link href={`/entreprises/${companySlug(truck.companyName)}`} className="font-semibold text-primary hover:underline">Ver frota</Link></p>}</div></div>
+            <div className="mt-4 flex items-center gap-3"><span className="grid size-12 place-items-center rounded-full bg-primary/8"><TruckIcon className="text-primary" /></span><div><h2 className="font-heading text-lg font-semibold text-foreground">AgroTrucks by Badora</h2><p className="text-xs text-muted-foreground">Camion vérifié par Badora</p></div></div>
             <div className="my-6 h-px bg-primary/10" />
             <p className="flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="size-4 text-primary" />{truck.location}, Guiné-Bissau</p>
-            <p className="mt-3 text-xl font-semibold text-foreground">{truck.phone}</p>
             <div className="mt-6"><TruckContactActions truck={truck} /></div>
-            <p className="mt-5 text-center text-[11px] leading-5 text-muted-foreground">A AgroTruck apenas facilita o contacto. Confirme todos os detalhes com o proprietário.</p>
+            <p className="mt-5 text-center text-[11px] leading-5 text-muted-foreground">A AgroTrucks by Badora facilite le contact. Confirmez tous les détails avant le chargement.</p>
           </div>
         </aside>
       </div>
