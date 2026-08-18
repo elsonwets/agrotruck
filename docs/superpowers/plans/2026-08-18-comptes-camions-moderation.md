@@ -36,13 +36,13 @@
 **Interfaces:**
 - Produces: `Truck` (updated), `TruckListingStatus`, `Account`, `AccountRole`, `Order` — every later task in this plan imports these.
 
-- [ ] **Step 1: Install Vitest**
+- [x] **Step 1: Install Vitest**
 
 ```bash
 pnpm add -D vitest
 ```
 
-- [ ] **Step 2: Add the Vitest config**
+- [x] **Step 2: Add the Vitest config**
 
 ```ts
 // vitest.config.ts
@@ -56,7 +56,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: Add the `test` script**
+- [x] **Step 3: Add the `test` script**
 
 In `package.json`, add to `"scripts"`:
 
@@ -64,7 +64,7 @@ In `package.json`, add to `"scripts"`:
 "test": "vitest run"
 ```
 
-- [ ] **Step 4: Update `types/truck.ts`**
+- [x] **Step 4: Update `types/truck.ts`**
 
 Replace the `Truck` interface (lines 18-42) — remove `verified: boolean`, add `ownerAccountId` and `listingStatus`:
 
@@ -101,7 +101,7 @@ export interface Truck {
 
 Keep everything else in the file (`TruckAvailability`, `ListingMode`, `TruckType`, `TruckRatings`, the label records) unchanged.
 
-- [ ] **Step 5: Create `types/account.ts`**
+- [x] **Step 5: Create `types/account.ts`**
 
 ```ts
 export type AccountRole = "admin" | "partner";
@@ -118,7 +118,7 @@ export interface Account {
 export type PublicAccount = Omit<Account, "passwordHash">;
 ```
 
-- [ ] **Step 6: Create `types/order.ts`**
+- [x] **Step 6: Create `types/order.ts`**
 
 ```ts
 export interface Order {
@@ -135,11 +135,11 @@ export interface Order {
 }
 ```
 
-- [ ] **Step 7: Verify the project still type-checks**
+- [x] **Step 7: Verify the project still type-checks**
 
 Run: `pnpm build 2>&1 | head -n 60` (it will fail — `lib/truck-directory.ts`, `lib/companies.ts`, and every file reading `truck.verified` or `truck.companyName` still reference the old shape. That is expected; those get fixed in later tasks.) Confirm the *only* errors are about `verified` / missing `ownerAccountId` / missing `listingStatus`, not a typo you introduced.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add vitest.config.ts package.json pnpm-lock.yaml types/truck.ts types/account.ts types/order.ts
@@ -158,7 +158,7 @@ git commit -m "feat: add vitest and update Truck/Account/Order types for the Bad
 - Consumes: `process.env.SESSION_SECRET` (added to `.env.example` in Task 7).
 - Produces: `hashPassword(password: string): Promise<string>`, `verifyPassword(password: string, hash: string): Promise<boolean>`, `signSession(payload: SessionPayload): string`, `verifySession(token: string): SessionPayload | null`, `type SessionPayload = { accountId: string; role: "admin" | "partner"; displayName: string }` — consumed by `_lib/session.ts` (Task 3), `auth.mts` (Task 4), `trucks.mts` (Task 6).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // netlify/functions/_lib/crypto.test.ts
@@ -203,12 +203,12 @@ describe("session tokens", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test`
 Expected: FAIL — `./crypto` does not exist yet.
 
-- [ ] **Step 3: Implement `_lib/crypto.ts`**
+- [x] **Step 3: Implement `_lib/crypto.ts`**
 
 ```ts
 // netlify/functions/_lib/crypto.ts
@@ -265,12 +265,12 @@ export function verifySession(token: string): SessionPayload | null {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `SESSION_SECRET=test-secret pnpm test`
 Expected: PASS (all 6 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add netlify/functions/_lib/crypto.ts netlify/functions/_lib/crypto.test.ts
@@ -289,7 +289,7 @@ git commit -m "feat: add password hashing and session token helpers"
 - Consumes: `signSession`, `verifySession`, `SessionPayload` from `./crypto` (Task 2).
 - Produces: `SESSION_COOKIE_NAME` (`"agrotruck_session"`), `sessionCookieHeader(payload: SessionPayload): string`, `clearSessionCookieHeader(): string`, `getSessionFromRequest(request: Request): SessionPayload | null` — consumed by `auth.mts` (Task 4) and `trucks.mts` (Task 6).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // netlify/functions/_lib/session.test.ts
@@ -321,12 +321,12 @@ describe("session cookies", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test`
 Expected: FAIL — `./session` does not exist yet.
 
-- [ ] **Step 3: Implement `_lib/session.ts`**
+- [x] **Step 3: Implement `_lib/session.ts`**
 
 ```ts
 // netlify/functions/_lib/session.ts
@@ -353,12 +353,12 @@ export function getSessionFromRequest(request: Request): SessionPayload | null {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `SESSION_SECRET=test-secret pnpm test`
 Expected: PASS (all 10 tests across both files)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add netlify/functions/_lib/session.ts netlify/functions/_lib/session.test.ts
@@ -378,7 +378,7 @@ git commit -m "feat: add session cookie read/write helpers"
 - Consumes: `hashPassword`, `verifyPassword` from `./crypto` (Task 2); `Account`, `AccountRole` from `types/account.ts` (Task 1); `getStore` from `@netlify/blobs`.
 - Produces: `createAccount(input: { phone: string; displayName: string; password: string; role: AccountRole }): Promise<Account>`, `findAccountByPhone(phone: string): Promise<Account | null>`, `findAccountById(id: string): Promise<Account | null>`, `listAccounts(role?: AccountRole): Promise<PublicAccount[]>` — consumed by `auth.mts` (Task 5) and `trucks.mts` (Task 6).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 The Blobs store needs to be swappable for a test double. `getStore` from `@netlify/blobs` throws outside a Netlify context, so the store module accepts an injected store for tests via a second parameter, defaulting to the real one in production.
 
@@ -428,12 +428,12 @@ describe("accounts store", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test`
 Expected: FAIL — `./accounts` does not exist yet.
 
-- [ ] **Step 3: Implement `_lib/accounts.ts`**
+- [x] **Step 3: Implement `_lib/accounts.ts`**
 
 ```ts
 // netlify/functions/_lib/accounts.ts
@@ -492,12 +492,12 @@ function normalizePhone(phone: string) {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm test`
 Expected: PASS
 
-- [ ] **Step 5: Write the admin seed script**
+- [x] **Step 5: Write the admin seed script**
 
 ```ts
 // scripts/seed-admin.ts
@@ -525,7 +525,7 @@ main();
 
 Add to `package.json` `"scripts"`: `"seed:admin": "tsx scripts/seed-admin.ts"`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add netlify/functions/_lib/accounts.ts netlify/functions/_lib/accounts.test.ts scripts/seed-admin.ts package.json
@@ -543,7 +543,7 @@ git commit -m "feat: add accounts store and admin seed script"
 - Consumes: `createAccount`, `findAccountByPhone`, `findAccountById`, `listAccounts` from `./_lib/accounts`; `verifyPassword` from `./_lib/crypto`; `sessionCookieHeader`, `clearSessionCookieHeader`, `getSessionFromRequest` from `./_lib/session`.
 - Produces: the public HTTP contract used by every page built in Tasks 8-10 — `POST ?action=login` `{phone, password}` → `200 {role, displayName}` + session cookie, or `401`; `POST ?action=logout` → `200` + cleared cookie; `GET ?action=session` → `200 {accountId, role, displayName}` or `401`; `POST ?action=create-partner` (admin session required) `{phone, displayName, password}` → `201 {id, phone, displayName, role}` or `403`; `GET ?action=list-partners` (admin session required) → `200 PublicAccount[]`.
 
-- [ ] **Step 1: Implement `auth.mts`**
+- [x] **Step 1: Implement `auth.mts`**
 
 ```ts
 // netlify/functions/auth.mts
@@ -610,7 +610,7 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
 }
 ```
 
-- [ ] **Step 2: Verify it locally**
+- [x] **Step 2: Verify it locally**
 
 Run: `netlify dev` (installs/uses the Netlify CLI already implied by this being a Netlify-deployed project; if `netlify` is not on PATH, run `npx netlify-cli dev`).
 
@@ -623,7 +623,7 @@ curl -i -X POST "http://localhost:8888/.netlify/functions/auth?action=login" -H 
 
 Expected: `200`, a `Set-Cookie: agrotruck_session=…` header, and body `{"role":"admin","displayName":"Badora"}`. Re-run with the wrong password and confirm `401`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add netlify/functions/auth.mts
@@ -643,7 +643,7 @@ git commit -m "feat: add auth Netlify Function (login, logout, session, partner 
 - Consumes: `Truck`, `TruckListingStatus` from `types/truck.ts` (Task 1).
 - Produces: `createTruck(input, ownerAccountId, store?): Promise<Truck>`, `updateTruck(id, patch, store?): Promise<Truck | null>`, `setListingStatus(id, status, store?): Promise<Truck | null>`, `findTruckById(id, store?): Promise<Truck | null>`, `listPublishedTrucks(store?): Promise<Truck[]>`, `listTrucksByOwner(ownerAccountId, store?): Promise<Truck[]>`, `listAllTrucks(store?): Promise<Truck[]>` (admin fleet + moderation views), `triggerRebuild(): void` — consumed by `trucks.mts` (Task 7) and every dashboard page (Tasks 9-10, via the function's HTTP contract, not these directly).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // netlify/functions/_lib/trucks.test.ts
@@ -714,12 +714,12 @@ describe("truck store", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm test`
 Expected: FAIL — `./trucks` does not exist yet.
 
-- [ ] **Step 3: Implement `_lib/trucks.ts`**
+- [x] **Step 3: Implement `_lib/trucks.ts`**
 
 ```ts
 // netlify/functions/_lib/trucks.ts
@@ -787,12 +787,12 @@ function slugify(value: string) {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm test`
 Expected: PASS
 
-- [ ] **Step 5: Implement the rebuild trigger**
+- [x] **Step 5: Implement the rebuild trigger**
 
 ```ts
 // netlify/functions/_lib/rebuild.ts
@@ -806,7 +806,7 @@ export function triggerRebuild(): void {
 }
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add netlify/functions/_lib/trucks.ts netlify/functions/_lib/trucks.test.ts netlify/functions/_lib/rebuild.ts
@@ -831,7 +831,7 @@ git commit -m "feat: add truck store with pending/published/rejected workflow an
   - `PATCH?id=` (auth required, must own the truck or be admin) → update; triggers rebuild.
   - `POST ?id=&action=publish` / `?action=reject` (admin only) → triggers rebuild.
 
-- [ ] **Step 1: Implement `trucks.mts`**
+- [x] **Step 1: Implement `trucks.mts`**
 
 ```ts
 // netlify/functions/trucks.mts
@@ -950,7 +950,7 @@ function json(body: unknown, status = 200) {
 }
 ```
 
-- [ ] **Step 2: Verify it locally**
+- [x] **Step 2: Verify it locally**
 
 With `netlify dev` running and the admin session cookie from Task 5's verification step:
 
@@ -961,7 +961,7 @@ curl -s -X POST "http://localhost:8888/.netlify/functions/trucks" -b "agrotruck_
 
 Expected: the `GET` returns `[]` (nothing published yet); the `POST` returns `201` with `"listingStatus":"pending"`. Confirm the same `POST` without the cookie returns `401`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add netlify/functions/trucks.mts
@@ -982,7 +982,7 @@ git commit -m "feat: add trucks Netlify Function (public read, authenticated wri
 - Consumes: `getSiteUrl()` from `lib/site-url.ts` (unchanged).
 - Produces: `listTrucks(): Promise<Truck[]>`, `findTruckBySlug(slug: string): Promise<Truck | undefined>` — same signatures as today, so `app/page.tsx`, `app/trucks/page.tsx`, `app/location/page.tsx`, `app/trucks/[slug]/page.tsx` need no changes in this task. `listCompanies`/`findCompanyBySlug` are removed (their only callers are deleted in Task 11 — until then the build will show unused-import errors, which is expected and resolved by Task 11).
 
-- [ ] **Step 1: Replace `lib/truck-directory.ts`**
+- [x] **Step 1: Replace `lib/truck-directory.ts`**
 
 ```ts
 // lib/truck-directory.ts
@@ -1052,13 +1052,13 @@ function toTruck(truck: z.infer<typeof truckSchema>): Truck {
 
 Public responses from `trucks.mts` never include `ownerAccountId`/`ownerName`/`companyName` (stripped in Task 7), so `toTruck` fills in a fixed, brand-only `ownerName` rather than trusting per-truck data — this is what makes "no partner identity on public pages" hold even if a future bug in the Function forgot to strip a field.
 
-- [ ] **Step 2: Delete the company grouping module and its type**
+- [x] **Step 2: Delete the company grouping module and its type**
 
 ```bash
 git rm lib/companies.ts types/company.ts
 ```
 
-- [ ] **Step 3: Update `.env.example`**
+- [x] **Step 3: Update `.env.example`**
 
 Replace the API block:
 
@@ -1075,16 +1075,16 @@ NETLIFY_BUILD_HOOK_URL=
 
 Keep `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_AGROTRUCK_WHATSAPP` as they are.
 
-- [ ] **Step 4: Update `README.md`**
+- [x] **Step 4: Update `README.md`**
 
 Replace the "API externe" section with a short description of the new model: trucks are created through `/partner` and `/admin`, stored in Netlify Blobs via `netlify/functions/trucks.mts`, and public pages read them through the same function at build time. Document `pnpm seed:admin`, `pnpm test`, and running `netlify dev` (not `pnpm dev`) for local work that touches Netlify Functions.
 
-- [ ] **Step 5: Verify the build's remaining errors are the expected ones**
+- [x] **Step 5: Verify the build's remaining errors are the expected ones**
 
 Run: `pnpm build 2>&1 | head -n 60`
 Expected: errors only in files touched by Task 11 (`app/entreprises/**`, `components/companies/**`, `app/trucks/[slug]/page.tsx`, `components/trucks/truck-card.tsx` — anything importing `lib/companies` or reading `truck.verified`/`truck.companyName`). No errors in `lib/truck-directory.ts` itself.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/truck-directory.ts .env.example README.md
@@ -1104,7 +1104,7 @@ git commit -m "feat: read trucks from the trucks Netlify Function instead of an 
 - Consumes: `GET /.netlify/functions/auth?action=session`, `POST /.netlify/functions/auth?action=login`, `POST /.netlify/functions/auth?action=logout` (Task 5).
 - Produces: `useSession(): { status: "loading" | "authenticated" | "unauthenticated"; session: { accountId: string; role: "admin" | "partner"; displayName: string } | null }` and `<SessionGate role="admin" | "partner">` — consumed by every page in Tasks 10-11.
 
-- [ ] **Step 1: Implement `lib/use-session.ts`**
+- [x] **Step 1: Implement `lib/use-session.ts`**
 
 ```ts
 // lib/use-session.ts
@@ -1137,7 +1137,7 @@ export function useSession() {
 }
 ```
 
-- [ ] **Step 2: Implement `components/auth/session-gate.tsx`**
+- [x] **Step 2: Implement `components/auth/session-gate.tsx`**
 
 ```tsx
 // components/auth/session-gate.tsx
@@ -1163,7 +1163,7 @@ export function SessionGate({ role, children }: { role: Role; children: React.Re
 }
 ```
 
-- [ ] **Step 3: Implement `app/login/page.tsx`**
+- [x] **Step 3: Implement `app/login/page.tsx`**
 
 ```tsx
 // app/login/page.tsx
@@ -1223,11 +1223,11 @@ export default function LoginPage() {
 }
 ```
 
-- [ ] **Step 4: Manual verification**
+- [x] **Step 4: Manual verification**
 
 Run `netlify dev`, visit `http://localhost:8888/login`, log in with the seeded admin. Confirm redirect to `/admin` (which does not exist until Task 10 — a 404 here is expected and fine; what you're checking is that the login call succeeds and the redirect fires).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/use-session.ts components/auth/session-gate.tsx app/login/page.tsx
@@ -1248,7 +1248,7 @@ git commit -m "feat: add session hook, route guard, and login page"
 - Consumes: `SessionGate`, `useSession` (Task 9); `GET/POST/PATCH /.netlify/functions/trucks` (Task 7); `truckTypeLabels`, `availabilityLabels` from `types/truck.ts`.
 - Produces: `<TruckForm truck={Truck | undefined} onSaved={() => void} />` reused by both the "new" and "edit" pages.
 
-- [ ] **Step 1: Implement `components/partner/truck-form.tsx`**
+- [x] **Step 1: Implement `components/partner/truck-form.tsx`**
 
 ```tsx
 // components/partner/truck-form.tsx
@@ -1347,7 +1347,7 @@ function split(value: string) { return value.split(",").map((item) => item.trim(
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <div><Label>{label}</Label><div className="mt-1.5">{children}</div></div>; }
 ```
 
-- [ ] **Step 2: Implement `app/partner/page.tsx`**
+- [x] **Step 2: Implement `app/partner/page.tsx`**
 
 ```tsx
 // app/partner/page.tsx
@@ -1409,7 +1409,7 @@ function statusLabel(status: Truck["listingStatus"]) {
 export default function Page() { return <SessionGate role="partner"><PartnerDashboard /></SessionGate>; }
 ```
 
-- [ ] **Step 3: Implement `app/partner/trucks/new/page.tsx`**
+- [x] **Step 3: Implement `app/partner/trucks/new/page.tsx`**
 
 ```tsx
 // app/partner/trucks/new/page.tsx
@@ -1432,7 +1432,7 @@ export default function NewTruckPage() {
 }
 ```
 
-- [ ] **Step 4: Implement `app/partner/trucks/edit/page.tsx`**
+- [x] **Step 4: Implement `app/partner/trucks/edit/page.tsx`**
 
 ```tsx
 // app/partner/trucks/edit/page.tsx
@@ -1472,11 +1472,11 @@ export default function EditTruckPage() {
 
 Note (found during execution): `useSearchParams()` in `EditTruckForm` requires a `<Suspense>` boundary around it in `app/partner/trucks/edit/page.tsx`, or `next build` fails under `output: "export"`. Wrap the render call: `<Suspense fallback={...}><EditTruckForm /></Suspense>`.
 
-- [ ] **Step 5: Manual verification**
+- [x] **Step 5: Manual verification**
 
 With `netlify dev` running, seed a partner via curl (using the admin session cookie from Task 5), log in as that partner at `/login`, create a truck at `/partner/trucks/new`, confirm it appears at `/partner` with status "En attente de validation", toggle its availability, and confirm the availability updates without the status changing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/partner components/partner
@@ -1495,7 +1495,7 @@ git commit -m "feat: add partner dashboard and truck create/edit forms"
 **Interfaces:**
 - Consumes: `SessionGate` (Task 9); `GET /.netlify/functions/trucks?scope=fleet` and `?status=pending`, `POST /.netlify/functions/trucks?id=&action=` (Task 7); `GET`/`POST /.netlify/functions/auth?action=list-partners` / `create-partner` (Task 5).
 
-- [ ] **Step 1: Implement `app/admin/page.tsx`** (fleet view, sorted by availability)
+- [x] **Step 1: Implement `app/admin/page.tsx`** (fleet view, sorted by availability)
 
 ```tsx
 // app/admin/page.tsx
@@ -1543,7 +1543,7 @@ function FleetView() {
 export default function Page() { return <SessionGate role="admin"><FleetView /></SessionGate>; }
 ```
 
-- [ ] **Step 2: Implement `app/admin/queue/page.tsx`**
+- [x] **Step 2: Implement `app/admin/queue/page.tsx`**
 
 ```tsx
 // app/admin/queue/page.tsx
@@ -1586,7 +1586,7 @@ function ModerationQueue() {
 export default function Page() { return <SessionGate role="admin"><ModerationQueue /></SessionGate>; }
 ```
 
-- [ ] **Step 3: Implement `app/admin/partners/page.tsx`**
+- [x] **Step 3: Implement `app/admin/partners/page.tsx`**
 
 ```tsx
 // app/admin/partners/page.tsx
@@ -1642,11 +1642,11 @@ function PartnersAdmin() {
 export default function Page() { return <SessionGate role="admin"><PartnersAdmin /></SessionGate>; }
 ```
 
-- [ ] **Step 4: Manual verification**
+- [x] **Step 4: Manual verification**
 
 Log in as admin, create a partner from `/admin/partners`, publish the truck created in Task 10 from `/admin/queue`, confirm it now appears in the `/admin` fleet view sorted correctly (available before in_transit before maintenance), and confirm publishing fired `triggerRebuild()` (check the `netlify dev` console log or, on a real deploy, the Netlify build hook activity).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/admin
@@ -1669,13 +1669,13 @@ git commit -m "feat: add admin fleet dashboard, moderation queue, and partner ac
 **Interfaces:**
 - Produces: no public page or component reads `truck.ownerName`, `truck.companyName`, `truck.phone`, or `truck.whatsapp` any more (those fields still exist on `Truck` for the admin dashboard, which reads them from `?scope=fleet`, an authenticated endpoint). The "contact" affordance on truck cards and the detail page becomes a link into the order flow instead of a direct WhatsApp/call to the truck's owner. (The order flow itself — the form at `/location` and its Netlify Function — is a separate, later plan; this task only removes the now-inconsistent direct-contact UI and points its call-to-action at `/location`, which already exists as a page.)
 
-- [ ] **Step 1: Delete the entreprises pages and company components**
+- [x] **Step 1: Delete the entreprises pages and company components**
 
 ```bash
 git rm -r app/entreprises components/companies
 ```
 
-- [ ] **Step 2: Update `components/layout/navbar.tsx`**
+- [x] **Step 2: Update `components/layout/navbar.tsx`**
 
 Remove the `["nav.companies", "/entreprises"]` entry from `links` (line 12) and change the CTA button's destination and label from the truck-registration WhatsApp link to the partner login:
 
@@ -1693,7 +1693,7 @@ Replace the `<Button asChild>` line (line 19) — keep the "become a partner" Wh
 </div>
 ```
 
-- [ ] **Step 3: Update `lib/contact.ts`**
+- [x] **Step 3: Update `lib/contact.ts`**
 
 ```ts
 // lib/contact.ts
@@ -1707,7 +1707,7 @@ export const truckRegistrationWhatsappUrl = whatsappUrl(
 );
 ```
 
-- [ ] **Step 4: Update `app/trucks/[slug]/page.tsx`**
+- [x] **Step 4: Update `app/trucks/[slug]/page.tsx`**
 
 Remove the `Building2`, `companySlug` imports and the owner/company block (lines 10, 52) — replace the sidebar identity block with a Badora-branded block and swap `TruckContactActions` for a link to the request flow:
 
@@ -1745,7 +1745,7 @@ Replace lines 54-56 (drop `truck.phone` display, swap contact actions for the re
 <div className="mt-6"><TruckContactActions truck={truck} /></div>
 ```
 
-- [ ] **Step 5: Update `components/trucks/truck-contact-actions.tsx`**
+- [x] **Step 5: Update `components/trucks/truck-contact-actions.tsx`**
 
 ```tsx
 // components/trucks/truck-contact-actions.tsx
@@ -1765,16 +1765,16 @@ export function TruckContactActions({ truck }: { truck: Truck }) {
 }
 ```
 
-- [ ] **Step 6: Update `components/trucks/truck-card.tsx`**
+- [x] **Step 6: Update `components/trucks/truck-card.tsx`**
 
 Read the file first (`Read components/trucks/truck-card.tsx`) and remove any rendering of `truck.companyName`/`truck.verified`/`truck.phone`/`truck.whatsapp`, following the same pattern as Step 4: drop the owner-identity line, drop the `verified` badge (field no longer exists), keep everything else (type, capacity, location, availability badge, rating) unchanged.
 
-- [ ] **Step 7: Verify the build is clean**
+- [x] **Step 7: Verify the build is clean**
 
 Run: `pnpm build`
 Expected: succeeds with no type errors and no references to `truck.verified`, `truck.companyName` outside `app/admin/**` (where `companyName` is still legitimately read from the authenticated `?scope=fleet` endpoint), or `lib/companies`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -1792,7 +1792,7 @@ git commit -m "feat: unify public truck pages under the Badora brand, drop entre
 
 **Interfaces:** none — purely presentational, no new interfaces produced or consumed.
 
-- [ ] **Step 1: Update `app/layout.tsx` metadata**
+- [x] **Step 1: Update `app/layout.tsx` metadata**
 
 Replace lines 10-27:
 
@@ -1817,7 +1817,7 @@ export const metadata: Metadata = {
 
 (Icon/OG image files themselves are not regenerated in this plan — flag to the user that new brand assets replacing `/public/brand/agrotruck-*` are a design task outside an implementation plan's scope, and the existing files are reused as placeholders.)
 
-- [ ] **Step 2: Update `app/manifest.ts`**
+- [x] **Step 2: Update `app/manifest.ts`**
 
 Replace `name`/`short_name`/`description` (lines 7-9):
 
@@ -1827,15 +1827,15 @@ short_name: "AgroTrucks",
 description: "La logistique de Badora et de son réseau de partenaires.",
 ```
 
-- [ ] **Step 3: Update `components/shared/brand-logo.tsx`**
+- [x] **Step 3: Update `components/shared/brand-logo.tsx`**
 
 Until new brand asset files exist, keep the existing images (still valid, just repoint the accessible name) and change both `alt` attributes from `"AgroTruck"` to `"AgroTrucks by Badora"` (lines 6-12).
 
-- [ ] **Step 4: Manual verification**
+- [x] **Step 4: Manual verification**
 
 Run `pnpm build && pnpm start`, open the site, confirm the browser tab title reads "AgroTrucks by Badora — Location de camions" and the PWA manifest name updated (DevTools → Application → Manifest).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/layout.tsx app/manifest.ts components/shared/brand-logo.tsx
