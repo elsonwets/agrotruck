@@ -1662,6 +1662,7 @@ git commit -m "feat: add admin fleet dashboard, moderation queue, and partner ac
 - Modify: `components/trucks/truck-contact-actions.tsx`
 - Modify: `components/trucks/truck-card.tsx`
 - Modify: `lib/contact.ts`
+- Modify: `app/sitemap.ts` (found during execution: it imports `listCompanies` from `lib/truck-directory`, which Task 8 removed — drop the `companies`/`listCompanies` half of the sitemap, keep the `trucks` half)
 
 **Interfaces:**
 - Produces: no public page or component reads `truck.ownerName`, `truck.companyName`, `truck.phone`, or `truck.whatsapp` any more (those fields still exist on `Truck` for the admin dashboard, which reads them from `?scope=fleet`, an authenticated endpoint). The "contact" affordance on truck cards and the detail page becomes a link into the order flow instead of a direct WhatsApp/call to the truck's owner. (The order flow itself — the form at `/location` and its Netlify Function — is a separate, later plan; this task only removes the now-inconsistent direct-contact UI and points its call-to-action at `/location`, which already exists as a page.)

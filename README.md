@@ -1,6 +1,8 @@
-# AgroTruck
+# AgroTrucks by Badora
 
-Annuaire public de camions en Guinée-Bissau et au Sénégal. Le site est en lecture seule : il affiche les véhicules fournis par une API externe et permet de contacter directement le propriétaire par téléphone ou WhatsApp.
+Plateforme logistique de Badora : Badora et ses partenaires transporteurs (invités par Badora) publient leurs camions, Badora valide chaque annonce avant publication, et les clients demandent une location — sans prix affiché — via un formulaire qui part ensuite vers WhatsApp.
+
+Le site reste un export statique Next.js déployé sur Netlify (`output: "export"`). Toute la logique dynamique (comptes, camions, modération) vit dans des Netlify Functions (`netlify/functions/`) adossées à Netlify Blobs. Les pages publiques (`/`, `/trucks`, `/trucks/[slug]`, `/location`) sont générées au build à partir de la fonction `trucks` ; les espaces authentifiés (`/login`, `/partner`, `/admin`) appellent les fonctions directement à l'exécution, donc toujours à jour.
 
 ## Développement
 
@@ -9,65 +11,26 @@ pnpm install
 pnpm dev
 ```
 
-L’application est disponible sur `http://localhost:3000`. Sans configuration API, les données de démonstration de `data/trucks.ts` sont utilisées.
+L'application est disponible sur `http://localhost:3000`. `pnpm dev` seul ne sert pas les Netlify Functions — sans `URL` défini dans l'environnement, `lib/truck-directory.ts` retombe sur les données de démonstration de `data/trucks.ts`. Pour travailler sur les comptes, la publication ou la modération, utilisez `netlify dev` (Netlify CLI), qui sert le site et les fonctions ensemble.
 
-## API externe
+Variables nécessaires dans `.env.local` (voir `.env.example`) :
 
-Ajoutez ces variables dans `.env.local` :
+- `SESSION_SECRET` — secret de signature des cookies de session.
+- `NETLIFY_BUILD_HOOK_URL` — optionnel en local ; déclenche un rebuild du site à chaque publication/modification de camion en production.
+- `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_AGROTRUCK_WHATSAPP` — inchangés.
 
-```env
-AGROTRUCK_DIRECTORY_API_URL=https://api.votre-domaine.com/public/trucks
-AGROTRUCK_DIRECTORY_API_TOKEN=
-AGROTRUCK_DIRECTORY_REVALIDATE_SECONDS=300
+## Comptes
+
+Aucune inscription libre. Seul un compte `admin` peut créer un compte `partner` (depuis `/admin/partners`). Pour créer le premier compte admin :
+
+```bash
+pnpm seed:admin +245955000100 "Badora" "un-mot-de-passe-fort"
 ```
-
-Le jeton est facultatif et reste côté serveur. L’API peut répondre avec un tableau, `{ "data": [...] }` ou `{ "trucks": [...] }`.
-
-Chaque camion suit ce contrat JSON :
-
-```json
-{
-  "id": "trk-001",
-  "slug": "scania-r450-plateau",
-  "name": "Scania R450 Plateau",
-  "brand": "Scania",
-  "model": "R450",
-  "type": "flatbed",
-  "capacityTons": 32,
-  "location": "Bissau",
-  "serviceAreas": ["Bissau", "Bafatá"],
-  "acceptedMaterials": ["Produits agricoles"],
-  "availability": "available",
-  "ownerName": "Mamadú Baldé",
-  "companyName": "TransGuiné Logística",
-  "ownerType": "company",
-  "phone": "+245 955 123 456",
-  "whatsapp": "+245955123456",
-  "description": "Plateau longue distance.",
-  "images": ["https://cdn.votre-domaine.com/trucks/001.jpg"],
-  "verified": true,
-  "restrictions": ["Poids à confirmer"],
-  "ratings": {
-    "overall": 4.8,
-    "vehicleQuality": 4.7,
-    "professionalism": 4.9,
-    "reliability": 4.8,
-    "reviewCount": 36
-  }
-}
-```
-
-Valeurs autorisées :
-
-- `type` : `flatbed`, `dump_truck`, `cargo`, `container`, `trailer`, `canter`
-- `availability` : `available`, `in_transit`, `maintenance`
-- les notes sont comprises entre 0 et 5
-
-Sans URL d’API, le site utilise les données de démonstration pour le développement local. Si une API configurée est indisponible ou renvoie un format invalide, aucun faux camion n’est publié et l’erreur est écrite dans les logs serveur.
 
 ## Vérifications
 
 ```bash
 pnpm lint
+pnpm test
 pnpm build
 ```
