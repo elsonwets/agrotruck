@@ -1470,6 +1470,8 @@ export default function EditTruckPage() {
 }
 ```
 
+Note (found during execution): `useSearchParams()` in `EditTruckForm` requires a `<Suspense>` boundary around it in `app/partner/trucks/edit/page.tsx`, or `next build` fails under `output: "export"`. Wrap the render call: `<Suspense fallback={...}><EditTruckForm /></Suspense>`.
+
 - [ ] **Step 5: Manual verification**
 
 With `netlify dev` running, seed a partner via curl (using the admin session cookie from Task 5), log in as that partner at `/login`, create a truck at `/partner/trucks/new`, confirm it appears at `/partner` with status "En attente de validation", toggle its availability, and confirm the availability updates without the status changing.
