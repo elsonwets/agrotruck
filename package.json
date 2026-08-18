@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:admin": "tsx scripts/seed-admin.ts"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.12",
