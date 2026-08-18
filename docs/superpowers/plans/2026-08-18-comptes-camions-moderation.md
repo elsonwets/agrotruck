@@ -31,6 +31,7 @@
 - Modify: `types/truck.ts`
 - Create: `types/account.ts`
 - Create: `types/order.ts` (used by a later plan, defined now alongside the other shared types so `truck.ts`'s `ownerAccountId` has a documented counterpart type)
+- Modify: `data/trucks.ts` (found during execution: the demo data used by `lib/truck-directory.ts` when `process.env.URL` is unset still had the old `verified: boolean` shape — each entry's `verified: true/false` was replaced with `ownerAccountId: "demo", listingStatus: "published"` to match the updated `Truck` type; this was not called out as a separate file in the original plan text but is required for `pnpm build`/`tsc` to pass)
 
 **Interfaces:**
 - Produces: `Truck` (updated), `TruckListingStatus`, `Account`, `AccountRole`, `Order` — every later task in this plan imports these.
