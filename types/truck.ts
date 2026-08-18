@@ -15,6 +15,8 @@ export interface TruckRatings {
   reviewCount: number;
 }
 
+export type TruckListingStatus = "pending" | "published" | "rejected";
+
 export interface Truck {
   id: string;
   slug: string;
@@ -29,6 +31,7 @@ export interface Truck {
   acceptedMaterials: string[];
   availability: TruckAvailability;
   availableFrom?: string;
+  ownerAccountId: string;
   ownerName: string;
   companyName?: string;
   ownerType: "individual" | "company";
@@ -36,7 +39,7 @@ export interface Truck {
   whatsapp: string;
   description: string;
   images: string[];
-  verified: boolean;
+  listingStatus: TruckListingStatus;
   restrictions: string[];
   ratings?: TruckRatings;
 }
