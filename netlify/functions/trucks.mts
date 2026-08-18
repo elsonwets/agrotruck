@@ -104,8 +104,16 @@ async function handleModerate(request: Request, url: URL) {
 }
 
 function stripOwner(truck: Truck) {
-  const { ownerAccountId: _ownerAccountId, ownerName: _ownerName, companyName: _companyName, ...publicTruck } = truck;
-  return publicTruck;
+  const {
+    id, slug, name, brand, model, type, listingMode, capacityTons, location,
+    serviceAreas, acceptedMaterials, availability, availableFrom, ownerType,
+    phone, whatsapp, description, images, listingStatus, restrictions, ratings,
+  } = truck;
+  return {
+    id, slug, name, brand, model, type, listingMode, capacityTons, location,
+    serviceAreas, acceptedMaterials, availability, availableFrom, ownerType,
+    phone, whatsapp, description, images, listingStatus, restrictions, ratings,
+  };
 }
 
 function json(body: unknown, status = 200) {

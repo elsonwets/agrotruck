@@ -43,7 +43,7 @@ function PartnerDashboard() {
             </div>
           </div>
         ))}
-        {trucks?.length === 0 && <p className="text-sm text-muted-foreground">Aucun camion pour l'instant.</p>}
+        {trucks?.length === 0 && <p className="text-sm text-muted-foreground">Aucun camion pour l&apos;instant.</p>}
       </div>
     </div>
   );

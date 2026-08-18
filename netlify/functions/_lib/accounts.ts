@@ -45,7 +45,7 @@ export async function listAccounts(role: AccountRole | undefined, store: BlobSto
   const accounts = (await Promise.all(blobs.map(({ key }) => store.get(key) as Promise<Account>)));
   return accounts
     .filter((account): account is Account => Boolean(account) && (!role || account.role === role))
-    .map(({ passwordHash: _passwordHash, ...account }) => account);
+    .map((account): PublicAccount => ({ id: account.id, phone: account.phone, role: account.role, displayName: account.displayName, createdAt: account.createdAt }));
 }
 
 function normalizePhone(phone: string) {
