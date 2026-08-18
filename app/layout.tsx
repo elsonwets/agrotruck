@@ -9,9 +9,9 @@ import { PwaRegister } from "@/components/pwa/pwa-register";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: { default: "AgroTruck — Encontre um truck disponível", template: "%s | AgroTruck" },
-  description: "Encontre trucks disponíveis na Guiné-Bissau e contacte diretamente os proprietários por WhatsApp ou telefone.",
-  applicationName: "AgroTruck",
+  title: { default: "AgroTrucks by Badora — Location de camions", template: "%s | AgroTrucks by Badora" },
+  description: "La logistique de Badora et de son réseau de partenaires, réunie au même endroit. Demandez une location de camions, sans prix affiché — le contact se fait ensuite directement.",
+  applicationName: "AgroTrucks by Badora",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/brand/agrotruck-icon-192.png", sizes: "192x192", type: "image/png" }],
   },
-  appleWebApp: { capable: true, title: "AgroTruck", statusBarStyle: "default" },
-  openGraph: { title: "AgroTruck", description: "Trucks disponíveis. Contacto direto.", images: ["/brand/agrotruck-lockup.png"], type: "website", locale: "pt_GW" },
+  appleWebApp: { capable: true, title: "AgroTrucks by Badora", statusBarStyle: "default" },
+  openGraph: { title: "AgroTrucks by Badora", description: "La logistique de Badora et de ses partenaires, au même endroit.", images: ["/brand/agrotruck-lockup.png"], type: "website", locale: "pt_GW" },
 };
 
 export const viewport = { themeColor: "#0B3D2E", colorScheme: "light" };

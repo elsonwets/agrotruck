@@ -4,9 +4,9 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AgroTruck",
-    short_name: "AgroTruck",
-    description: "Encontre trucks disponíveis e contacte diretamente os proprietários.",
+    name: "AgroTrucks by Badora",
+    short_name: "AgroTrucks",
+    description: "La logistique de Badora et de son réseau de partenaires.",
     start_url: "/",
     id: "/",
     scope: "/",
