@@ -32,4 +32,9 @@ describe("order store", () => {
   it("returns an empty list when there are no orders", async () => {
     expect(await listOrders(store)).toEqual([]);
   });
+
+  it("keeps an id chosen by the client (mission published offline)", async () => {
+    const id = "3f6c1a52-8e1b-4c5e-9a57-1d2f0c9b7e41";
+    expect((await createOrder({ ...baseInput, id }, store)).id).toBe(id);
+  });
 });

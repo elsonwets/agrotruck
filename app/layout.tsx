@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/footer";
 import { AppProviders } from "@/components/providers/app-providers";
 import { getSiteUrl } from "@/lib/site-url";
 import { PwaRegister } from "@/components/pwa/pwa-register";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <AnimatedBackground />
           <PwaRegister />
           <Navbar />
+          <OfflineBanner />
           {children}
           <Footer />
         </AppProviders>

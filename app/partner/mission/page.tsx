@@ -5,16 +5,15 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { SessionGate } from "@/components/auth/session-gate";
-import { ContactCard, MissionFacts, MissionHistory } from "@/components/missions/mission-parts";
+import { ContactCard, MissionFacts, MissionHistory, PendingSyncBadge } from "@/components/missions/mission-parts";
 import { MissionStatusBadge } from "@/components/missions/mission-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { performOnlineAction, performQueueableAction, withQueuedActions } from "@/lib/mission-actions";
 import { missionRoute } from "@/lib/missions";
 import { useSession } from "@/lib/use-session";
 import type { MissionView } from "@/types/order";
-
-type Action = "accept" | "loaded" | "delivered";
 
 // "14:30" → date du jour à 14 h 30 (heure locale), en ISO ; vide = maintenant.
 function timeToday(time: string): string | undefined {
@@ -32,13 +31,19 @@ function MissionDetail() {
   const [time, setTime] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(0);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !session) return;
     fetch(`/.netlify/functions/orders?id=${encodeURIComponent(id)}`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then(setOrder, () => setOrder(null));
-  }, [id]);
+      .then((response) => (response.ok ? (response.json() as Promise<MissionView>) : null))
+      .then(async (data) => {
+        if (!data) { setOrder(null); return; }
+        const local = await withQueuedActions(data, session); // « chargé » / « livré » faits hors ligne
+        setOrder(local.order);
+        setPending(local.pending);
+      }, () => setOrder(null));
+  }, [id, session]);
 
   if (!id || order === null) return <Back><p className="mt-6 text-sm text-muted-foreground">Mission introuvable ou déjà prise par un autre transporteur.</p></Back>;
   if (order === undefined) return <Back><p className="mt-6 text-sm text-muted-foreground">Chargement…</p></Back>;
@@ -47,24 +52,18 @@ function MissionDetail() {
   const mine = order.transporterAccountId === session?.accountId;
   const confirmedDelivery = order.events?.some((event) => event.type === "delivered" && event.accountId === session?.accountId);
 
-  const act = async (action: Action) => {
+  const act = async (action: "accept" | "loaded" | "delivered") => {
+    if (!session) return;
     setBusy(true);
     setError(null);
-    try {
-      const response = await fetch(`/.netlify/functions/orders?id=${encodeURIComponent(order.id)}&action=${action}`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ at: action === "accept" ? undefined : timeToday(time) }),
-      });
-      const data = (await response.json().catch(() => ({}))) as MissionView & { error?: string };
-      if (!response.ok) { setError(data.error ?? "Action impossible pour le moment."); return; }
-      setOrder(data);
-      setTime("");
-    } catch {
-      setError("Action impossible sans connexion. Réessayez.");
-    } finally {
-      setBusy(false);
-    }
+    const outcome = action === "accept"
+      ? await performOnlineAction(order, "accept", "accepter une mission")
+      : await performQueueableAction(order, action, session, timeToday(time));
+    setBusy(false);
+    if (outcome.status === "error") { setError(outcome.message); return; }
+    setOrder(outcome.order);
+    setTime("");
+    if (outcome.status === "queued") setPending((count) => count + 1);
   };
 
   const nextStep = mine && (status === "assigned" ? "loaded" : status === "loaded" || (status === "delivered" && !confirmedDelivery) ? "delivered" : null);
@@ -73,8 +72,9 @@ function MissionDetail() {
     <Back>
       <div className="mt-6 flex flex-wrap items-start justify-between gap-3">
         <h1 className="font-heading text-2xl font-bold sm:text-3xl">{missionRoute(order)}</h1>
-        <MissionStatusBadge status={order.status} perspective="transporter" />
+        <div className="flex flex-wrap gap-1.5">{pending > 0 && <PendingSyncBadge />}<MissionStatusBadge status={order.status} perspective="transporter" /></div>
       </div>
+      {pending > 0 && <p className="mt-3 text-sm text-muted-foreground">Enregistré sur le téléphone avec l&apos;heure de l&apos;action : ce sera envoyé automatiquement au retour du réseau.</p>}
       <div className="mt-6"><MissionFacts order={order} /></div>
       <div className="mt-5"><ContactCard title="Producteur" name={order.clientName} phone={order.clientPhone}
         empty="Le contact du producteur s'affiche après acceptation." /></div>

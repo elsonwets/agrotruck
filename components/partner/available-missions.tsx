@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { MapPin } from "lucide-react";
 import { MissionCard } from "@/components/missions/mission-parts";
 import { Button } from "@/components/ui/button";
+import { performOnlineAction } from "@/lib/mission-actions";
 import type { PublicAccount } from "@/types/account";
 import type { Order } from "@/types/order";
 
@@ -24,18 +25,12 @@ export function AvailableMissions() {
   const accept = async (order: Order) => {
     setBusyId(order.id);
     setError(null);
-    try {
-      const response = await fetch(`/.netlify/functions/orders?id=${encodeURIComponent(order.id)}&action=accept`, { method: "POST" });
-      if (response.ok) { router.push(`/partner/mission?id=${order.id}`); return; }
-      const { error: message } = (await response.json().catch(() => ({}))) as { error?: string };
-      setError(message ?? "Impossible d'accepter cette mission.");
-      // La mission a été prise par un autre transporteur : on la retire de la liste.
-      if (response.status === 404 || response.status === 409) setOrders((current) => current?.filter((item) => item.id !== order.id) ?? null);
-    } catch {
-      setError("Connexion nécessaire pour accepter une mission.");
-    } finally {
-      setBusyId(null);
-    }
+    const outcome = await performOnlineAction(order, "accept", "accepter une mission");
+    setBusyId(null);
+    if (outcome.status !== "error") { router.push(`/partner/mission?id=${order.id}`); return; }
+    setError(outcome.message);
+    // Prise entre-temps par un autre transporteur : on la retire de la liste.
+    if (outcome.message === "Mission déjà prise" || outcome.message === "Mission introuvable") setOrders((current) => current?.filter((item) => item.id !== order.id) ?? null);
   };
 
   const incompleteProfile = profile && !profile.workZones?.length;

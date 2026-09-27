@@ -38,7 +38,6 @@ const handler = async (request: Request, context?: Context) => {
 
   if (request.method === "GET" && action === "session") return handleSession(request);
   if (request.method === "GET" && action === "profile") return handleProfile(request);
-  if (request.method === "GET" && action === "list-partners") return handleListUsers(request, "partner");
   if (request.method === "GET" && action === "list-users") return handleListUsers(request);
   if (request.method === "POST" && action === "login") return handleLogin(request);
   if (request.method === "POST" && action === "logout") return handleLogout();
@@ -117,9 +116,9 @@ async function handleCreatePartner(request: Request) {
   return json(toPublicAccount(account), 201);
 }
 
-async function handleListUsers(request: Request, forcedRole?: "partner") {
+async function handleListUsers(request: Request) {
   if (!(await isAdmin(request))) return json({ error: "Réservé à Badora" }, 403);
-  const role = forcedRole ?? new URL(request.url).searchParams.get("role");
+  const role = new URL(request.url).searchParams.get("role");
   return json(await listAccounts(role === "partner" || role === "producer" || role === "admin" ? role : undefined));
 }
 

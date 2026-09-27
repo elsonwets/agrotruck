@@ -21,10 +21,10 @@ const spaceLinks: Record<Role, SpaceLink[]> = {
     { href: "/profil", label: "Mon profil" },
   ],
   admin: [
-    { href: "/admin", label: "Flotte" },
-    { href: "/admin/queue", label: "Validation" },
-    { href: "/admin/partners", label: "Partenaires" },
-    { href: "/admin/orders", label: "Demandes" },
+    { href: "/admin", label: "Tableau de bord" },
+    { href: "/admin/orders", label: "Missions" },
+    { href: "/admin/users", label: "Utilisateurs" },
+    { href: "/admin/queue", label: "Validation camions" },
     { href: "/profil", label: "Mon profil" },
   ],
 };
@@ -44,7 +44,7 @@ export function SpaceNav() {
     return (params.get("tab") ?? "disponibles") === tab;
   };
 
-  return <div className="border-b border-primary/10 bg-white">
+  return <div data-print-hidden className="border-b border-primary/10 bg-white">
     <nav className="page-shell flex items-center gap-2" aria-label="Mon espace">
       <div className="scrollbar-thin -mb-px flex flex-1 gap-1 overflow-x-auto">
         {spaceLinks[session.role].map((link) => (

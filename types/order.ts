@@ -46,4 +46,6 @@ export const productTypeLabels: Record<ProductType, string> = { cashew: "Noix de
 // Mission telle que renvoyée par la fonction orders : avec le contact du transporteur une fois assigné.
 export interface MissionView extends Order {
   transporter?: { name: string; phone: string } | null;
+  // Vue Badora : transporteurs à qui une mission en attente est proposée (type + région).
+  candidateIds?: string[];
 }

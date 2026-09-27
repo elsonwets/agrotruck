@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { vehicleCategories } from "@/data/vehicle-categories";
 import { zones } from "@/data/zones";
+import { getOutbox } from "@/lib/outbox";
 import { productTypeLabels } from "@/types/order";
 import type { PublicAccount } from "@/types/account";
 
@@ -55,18 +56,22 @@ function NewRequestForm() {
     setSaving(true);
     setError(null);
     try {
-      const response = await fetch("/.netlify/functions/orders", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+      // L'identifiant est choisi ici : une demande publiée hors ligne puis rejouée ne crée pas de doublon.
+      const clientRequestId = crypto.randomUUID();
+      const result = await getOutbox().submit({
+        url: "/.netlify/functions/orders",
+        kind: "create",
+        label: `Demande ${form.pickupLocation} → ${form.dropoffLocation}`,
+        body: {
           ...form,
+          clientRequestId,
           quantitySacks: form.quantitySacks ? Number(form.quantitySacks) : undefined,
           quantityKg: form.quantityKg ? Number(form.quantityKg) : undefined,
-        }),
+        },
       });
-      if (!response.ok) { setError("Vérifiez les champs de la demande."); return; }
-      const { id } = (await response.json()) as { id: string };
-      router.push(`/producteur/demande?id=${id}`);
+      if (result.status === "queued") { router.push("/producteur"); return; }
+      if (!result.response.ok) { setError("Vérifiez les champs de la demande."); return; }
+      router.push(`/producteur/demande?id=${clientRequestId}`);
     } catch {
       setError("Envoi impossible pour le moment. Réessayez.");
     } finally {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { findAccountById } from "./_lib/accounts";
+import { findAccountById, listAccounts } from "./_lib/accounts";
 import {
   canViewOrder, createOrder, findOrderById, listOrders, matchesTransporter, missionForViewer, transition, transporterContact,
   updateOrderIfUnchanged, type OrderAction,
@@ -34,6 +34,8 @@ const missionSchema = z.object({
   quantityKg: z.coerce.number().nonnegative().optional(),
   neededFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   cargoDescription: z.string().trim().max(500).default(""),
+  // Identifiant choisi par le téléphone : rejouer une demande publiée hors ligne ne crée pas de doublon.
+  clientRequestId: z.string().uuid().optional(),
 }).refine((mission) => Boolean(mission.quantitySacks || mission.quantityKg), { message: "Quantité requise", path: ["quantitySacks"] });
 
 const actions = new Set<OrderAction>(["accept", "assign", "loaded", "delivered", "cancel"]);
@@ -52,9 +54,18 @@ const handler = async (request: Request) => {
 
 export default handler;
 
+// Vue Badora : chaque mission avec son transporteur et, si elle attend, les transporteurs qui correspondent.
 async function handleList(request: Request) {
   if ((await getActiveSession(request))?.role !== "admin") return json({ error: "Réservé à Badora" }, 403);
-  return json(await listOrders());
+  const [orders, partners, trucks] = await Promise.all([listOrders(), listAccounts("partner"), listAllTrucks()]);
+  const byId = new Map(partners.map((partner) => [partner.id, partner]));
+  return json(orders.map((order) => ({
+    ...order,
+    transporter: transporterContact((order.transporterAccountId && byId.get(order.transporterAccountId)) || null),
+    ...(order.pickupZone && (order.status ?? "pending") === "pending" && {
+      candidateIds: partners.filter((partner) => matchesTransporter(order, partner, trucks)).map((partner) => partner.id),
+    }),
+  })));
 }
 
 async function handleMine(request: Request) {
@@ -108,8 +119,14 @@ async function createMission(session: SessionPayload, body: unknown) {
   if (!parsed.success) return json({ error: "Champs invalides", issues: parsed.error.issues }, 400);
   const producer = await findAccountById(session.accountId);
   if (!producer) return json({ error: "Non connecté" }, 401);
+  const { clientRequestId, ...mission } = parsed.data;
+  if (clientRequestId) {
+    const existing = await findOrderById(clientRequestId);
+    if (existing) return existing.producerAccountId === producer.id ? json(existing) : json({ error: "Requête invalide" }, 409);
+  }
   const order = await createOrder({
-    ...parsed.data,
+    ...mission,
+    id: clientRequestId,
     producerAccountId: producer.id,
     requestedTruckCount: 1,
     truckType: "",
@@ -133,6 +150,11 @@ async function handleAction(request: Request, url: URL) {
     }
   } else if (!canViewOrder(order, session)) {
     return json({ error: "Mission introuvable" }, 404);
+  }
+  if (action === "assign") {
+    const transporterId = ((await request.clone().json().catch(() => null)) as { transporterAccountId?: string } | null)?.transporterAccountId;
+    const transporter = transporterId ? await findAccountById(transporterId) : null;
+    if (!transporter || transporter.role !== "partner" || transporter.disabled) return json({ error: "Transporteur actif requis" }, 400);
   }
   const body = (await request.json().catch(() => null)) as { at?: string; comment?: string; transporterAccountId?: string } | null;
   const options = {

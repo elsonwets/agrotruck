@@ -5,14 +5,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { SessionGate } from "@/components/auth/session-gate";
-import { ContactCard, MissionFacts, MissionHistory } from "@/components/missions/mission-parts";
+import { ContactCard, MissionFacts, MissionHistory, PendingSyncBadge } from "@/components/missions/mission-parts";
 import { MissionStatusBadge } from "@/components/missions/mission-status-badge";
 import { Button } from "@/components/ui/button";
+import { performOnlineAction, performQueueableAction, withQueuedActions } from "@/lib/mission-actions";
 import { missionRoute } from "@/lib/missions";
 import { useSession } from "@/lib/use-session";
 import type { MissionView } from "@/types/order";
-
-type Action = "loaded" | "delivered" | "cancel";
 
 function RequestDetail() {
   const id = useSearchParams().get("id");
@@ -21,13 +20,19 @@ function RequestDetail() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [pending, setPending] = useState(0);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !session) return;
     fetch(`/.netlify/functions/orders?id=${encodeURIComponent(id)}`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then(setOrder, () => setOrder(null));
-  }, [id]);
+      .then((response) => (response.ok ? (response.json() as Promise<MissionView>) : null))
+      .then(async (data) => {
+        if (!data) { setOrder(null); return; }
+        const local = await withQueuedActions(data, session); // actions faites hors ligne, pas encore envoyées
+        setOrder(local.order);
+        setPending(local.pending);
+      }, () => setOrder(null));
+  }, [id, session]);
 
   if (!id || order === null) return <Back><p className="mt-6 text-sm text-muted-foreground">Demande introuvable.</p></Back>;
   if (order === undefined) return <Back><p className="mt-6 text-sm text-muted-foreground">Chargement…</p></Back>;
@@ -36,28 +41,27 @@ function RequestDetail() {
   const myId = session?.accountId;
   const confirmedDelivery = order.events?.some((event) => event.type === "delivered" && event.accountId === myId);
 
-  const act = async (action: Action) => {
+  const act = async (action: "loaded" | "delivered" | "cancel") => {
+    if (!session) return;
     setBusy(true);
     setError(null);
-    try {
-      const response = await fetch(`/.netlify/functions/orders?id=${encodeURIComponent(order.id)}&action=${action}`, { method: "POST" });
-      const data = (await response.json().catch(() => ({}))) as MissionView & { error?: string };
-      if (!response.ok) { setError(data.error ?? "Action impossible pour le moment."); return; }
-      setOrder(data);
-      setConfirmCancel(false);
-    } catch {
-      setError("Action impossible pour le moment. Vérifiez la connexion.");
-    } finally {
-      setBusy(false);
-    }
+    const outcome = action === "cancel"
+      ? await performOnlineAction(order, "cancel", "annuler la demande")
+      : await performQueueableAction(order, action, session);
+    setBusy(false);
+    if (outcome.status === "error") { setError(outcome.message); return; }
+    setOrder(outcome.order);
+    if (outcome.status === "queued") setPending((count) => count + 1);
+    setConfirmCancel(false);
   };
 
   return (
     <Back>
       <div className="mt-6 flex flex-wrap items-start justify-between gap-3">
         <h1 className="font-heading text-2xl font-bold sm:text-3xl">{missionRoute(order)}</h1>
-        <MissionStatusBadge status={order.status} />
+        <div className="flex flex-wrap gap-1.5">{pending > 0 && <PendingSyncBadge />}<MissionStatusBadge status={order.status} /></div>
       </div>
+      {pending > 0 && <p className="mt-3 text-sm text-muted-foreground">Enregistré sur le téléphone : ce sera envoyé automatiquement au retour du réseau.</p>}
 
       <div className="mt-6"><MissionFacts order={order} /></div>
 

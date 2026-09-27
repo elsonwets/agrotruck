@@ -9,19 +9,28 @@ import { MissionStatusBadge } from "./mission-status-badge";
 
 type Perspective = "producer" | "transporter";
 
-export function MissionCard({ order, href, perspective, children }: { order: Order; href: string; perspective: Perspective; children?: React.ReactNode }) {
-  return <div className="rounded-2xl border border-primary/10 bg-white p-5 transition hover:border-primary/30">
-    <Link href={href} className="focus-ring block">
-      <div className="flex items-start justify-between gap-3">
-        <p className="font-semibold">{missionRoute(order)}</p>
+export function MissionCard({ order, href, perspective, pendingSync, children }: { order: Order; href?: string; perspective: Perspective; pendingSync?: boolean; children?: React.ReactNode }) {
+  const summary = <>
+    <div className="flex items-start justify-between gap-3">
+      <p className="font-semibold">{missionRoute(order)}</p>
+      <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+        {pendingSync && <PendingSyncBadge />}
         <MissionStatusBadge status={order.status} perspective={perspective} />
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {order.productType ? productTypeLabels[order.productType] : order.cargoDescription}{missionQuantity(order) && ` · ${missionQuantity(order)}`} · le {formatDay(order.neededFrom)}
-      </p>
-    </Link>
+    </div>
+    <p className="mt-1 text-sm text-muted-foreground">
+      {order.productType ? productTypeLabels[order.productType] : order.cargoDescription}{missionQuantity(order) && ` · ${missionQuantity(order)}`} · le {formatDay(order.neededFrom)}
+    </p>
+  </>;
+  return <div className={cn("rounded-2xl border bg-white p-5 transition", pendingSync ? "border-dashed border-primary/25" : "border-primary/10 hover:border-primary/30")}>
+    {href ? <Link href={href} className="focus-ring block">{summary}</Link> : summary}
     {children && <div className="mt-4 flex flex-wrap gap-2">{children}</div>}
   </div>;
+}
+
+// Action ou demande enregistrée sur le téléphone, pas encore reçue par le serveur.
+export function PendingSyncBadge() {
+  return <span className="inline-flex items-center rounded-full border border-dashed border-primary/30 px-2.5 py-1 text-[11px] font-semibold text-primary/80">En attente d&apos;envoi</span>;
 }
 
 export function MissionFacts({ order }: { order: Order }) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { getOutbox } from "@/lib/outbox";
 
 export type Role = "admin" | "partner" | "producer";
 export interface Session { accountId: string; role: Role; displayName: string }
@@ -38,6 +39,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => apply(await loadSession()), [apply]);
 
   const logout = useCallback(async () => {
+    // Téléphone partagé : on envoie ce qui peut l'être, puis on efface la file et les données en cache.
+    const outbox = getOutbox();
+    await outbox.flush().catch(() => null);
+    await outbox.clear().catch(() => null);
+    if (typeof caches !== "undefined") await caches.delete("agrotruck-data-v1").catch(() => false);
     await fetch("/.netlify/functions/auth?action=logout", { method: "POST" }).catch(() => null);
     // Rechargement complet : on repart d'un état propre, sans page privée encore affichée.
     window.location.assign("/");

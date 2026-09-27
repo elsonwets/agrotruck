@@ -22,7 +22,7 @@ Variables nécessaires dans `.env.local` (voir `.env.example`) :
 
 ## Comptes
 
-Les producteurs et coopératives s'inscrivent eux-mêmes sur `/inscription` (téléphone + PIN de 4 à 6 chiffres). Les transporteurs (`partner`) ne s'inscrivent pas : un compte `admin` les crée depuis `/admin/partners`. Connexion limitée à 5 essais par 15 minutes et par numéro. Pour créer un compte en ligne de commande (bac à sable local, ou store Netlify si `NETLIFY_SITE_ID` / contexte Blobs est défini) :
+Les producteurs et coopératives s'inscrivent eux-mêmes sur `/inscription` (téléphone + PIN de 4 à 6 chiffres). Les transporteurs (`partner`) ne s'inscrivent pas : un compte `admin` les crée depuis `/admin/users`. Connexion limitée à 5 essais par 15 minutes et par numéro. Pour créer un compte en ligne de commande (bac à sable local, ou store Netlify si `NETLIFY_SITE_ID` / contexte Blobs est défini) :
 
 ```bash
 pnpm seed:account +245955000100 "Badora" "un-mot-de-passe-fort"             # admin

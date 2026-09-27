@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { SessionGate } from "@/components/auth/session-gate";
+import { MissionStatsPanel } from "@/components/admin/mission-stats-panel";
 import { availabilityLabels } from "@/types/truck";
 import type { Truck } from "@/types/truck";
 
 const ORDER: Record<Truck["availability"], number> = { available: 0, in_transit: 1, maintenance: 2 };
 
-function FleetView() {
+function AdminDashboard() {
   const [trucks, setTrucks] = useState<Truck[] | null>(null);
 
   useEffect(() => {
@@ -18,10 +19,9 @@ function FleetView() {
 
   return (
     <div className="page-shell py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl font-bold">Flotte — Badora &amp; partenaires</h1>
-      </div>
-      <div className="mt-8 grid gap-3">
+      <MissionStatsPanel />
+      <h2 className="mt-12 font-heading text-2xl font-bold">Flotte — Badora &amp; partenaires</h2>
+      <div className="mt-5 grid gap-3">
         {sorted.map((truck) => (
           <div key={truck.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/10 bg-white p-4">
             <div>
@@ -37,4 +37,4 @@ function FleetView() {
   );
 }
 
-export default function Page() { return <SessionGate role="admin"><FleetView /></SessionGate>; }
+export default function Page() { return <SessionGate role="admin"><AdminDashboard /></SessionGate>; }

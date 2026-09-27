@@ -105,3 +105,9 @@ button, a { touch-action: manipulation; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Export PDF (impression) : seul le contenu de la page est imprimé. */
+@media print {
+  .site-header, footer, [data-print-hidden] { display: none !important; }
+  body { background: #fff; }
+}
