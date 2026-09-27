@@ -5,11 +5,12 @@
   "packageManager": "pnpm@11.6.0",
   "scripts": {
     "dev": "next dev",
+    "dev:functions": "pnpm --package=netlify-cli dlx netlify functions:serve --offline --port 9999",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "seed:admin": "tsx scripts/seed-admin.ts"
+    "seed:account": "tsx scripts/seed-account.ts"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.12",
