@@ -6,16 +6,16 @@ export type Language = "pt" | "fr" | "en";
 
 const messages = {
   pt: {
-    "nav.how": "Como funciona", "nav.about": "Sobre nós", "nav.companies": "Empresas", "nav.rental": "Aluguer", "nav.sale": "Venda",
-    "controls.language": "Idioma", "controls.themeLight": "Ativar tema claro", "controls.themeDark": "Ativar tema escuro", "menu.open": "Abrir menu", "menu.close": "Fechar menu",
+    "nav.how": "Como funciona", "nav.about": "Sobre nós", "nav.partner": "Espaço parceiro", "nav.rental": "Aluguer", "nav.sale": "Venda",
+    "controls.language": "Idioma", "menu.open": "Abrir menu", "menu.close": "Fechar menu",
   },
   fr: {
-    "nav.how": "Comment ça marche", "nav.about": "À propos", "nav.companies": "Entreprises", "nav.rental": "Location", "nav.sale": "Vente",
-    "controls.language": "Langue", "controls.themeLight": "Activer le thème clair", "controls.themeDark": "Activer le thème sombre", "menu.open": "Ouvrir le menu", "menu.close": "Fermer le menu",
+    "nav.how": "Comment ça marche", "nav.about": "À propos", "nav.partner": "Espace partenaire", "nav.rental": "Location", "nav.sale": "Vente",
+    "controls.language": "Langue", "menu.open": "Ouvrir le menu", "menu.close": "Fermer le menu",
   },
   en: {
-    "nav.how": "How it works", "nav.about": "About", "nav.companies": "Companies", "nav.rental": "Rental", "nav.sale": "For sale",
-    "controls.language": "Language", "controls.themeLight": "Use light theme", "controls.themeDark": "Use dark theme", "menu.open": "Open menu", "menu.close": "Close menu",
+    "nav.how": "How it works", "nav.about": "About", "nav.partner": "Partner area", "nav.rental": "Rental", "nav.sale": "For sale",
+    "controls.language": "Language", "menu.open": "Open menu", "menu.close": "Close menu",
   },
 } as const;
 
@@ -35,7 +35,6 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     });
   }, []);
   useEffect(() => { document.documentElement.lang = language; if (settingsReady) localStorage.setItem("agrotruck-language", language); }, [language, settingsReady]);
-  useEffect(() => { document.documentElement.dataset.theme = "light"; localStorage.removeItem("agrotruck-theme"); }, []);
 
   const value = useMemo<AppContextValue>(() => ({
     language,

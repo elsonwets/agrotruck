@@ -18,7 +18,7 @@ export function Navbar() {
     <nav className="hidden items-center gap-6 lg:flex" aria-label="Navegação principal">{links.map(([key, href]) => <Link key={href} href={href} className="focus-ring whitespace-nowrap text-[13px] font-medium text-foreground/65 transition hover:text-primary">{t(key)}</Link>)}</nav>
     <div className="hidden shrink-0 items-center gap-2 lg:flex">
       <HeaderControls/>
-      <Link href="/login" className="focus-ring text-[13px] font-semibold text-foreground/65 hover:text-primary">Espace partenaire</Link>
+      <Link href="/login" className="focus-ring text-[13px] font-semibold text-foreground/65 hover:text-primary">{t("nav.partner")}</Link>
       <Button asChild className="whitespace-nowrap"><a href={truckRegistrationWhatsappUrl} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />Devenir partenaire</a></Button>
     </div>
     <MobileNavigation />

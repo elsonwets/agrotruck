@@ -11,7 +11,7 @@ import { HeaderControls } from "./header-controls";
 import { truckRegistrationWhatsappUrl } from "@/lib/contact";
 
 const links = [
-  ["nav.rental", "/location"], ["nav.sale", "/vente"], ["nav.companies", "/entreprises"], ["nav.how", "/comment-ca-marche"], ["nav.about", "/about"],
+  ["nav.rental", "/location"], ["nav.sale", "/vente"], ["nav.how", "/comment-ca-marche"], ["nav.about", "/about"], ["nav.partner", "/login"],
 ] as const;
 export function MobileNavigation() {
   const [open, setOpen] = useState(false);
