@@ -42,3 +42,8 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
 };
 
 export const productTypeLabels: Record<ProductType, string> = { cashew: "Noix de cajou", rice: "Riz", other: "Autre" };
+
+// Mission telle que renvoyée par la fonction orders : avec le contact du transporteur une fois assigné.
+export interface MissionView extends Order {
+  transporter?: { name: string; phone: string } | null;
+}

@@ -3,15 +3,8 @@ import {
   createAccount, findAccountByPhone, findAccountById, listAccounts, setAccountDisabled, setAccountPassword, updateProfile, type BlobStore,
 } from "./accounts";
 import { verifyPassword } from "./crypto";
+import { fakeStore } from "./test-store";
 
-function fakeStore(): BlobStore {
-  const data = new Map<string, string>();
-  return {
-    async setJSON(key, value) { data.set(key, JSON.stringify(value)); },
-    async get(key) { return data.has(key) ? JSON.parse(data.get(key)!) : null; },
-    async list({ prefix }: { prefix: string }) { return { blobs: [...data.keys()].filter((key) => key.startsWith(prefix)).map((key) => ({ key })) }; },
-  };
-}
 
 describe("accounts store", () => {
   let store: BlobStore;

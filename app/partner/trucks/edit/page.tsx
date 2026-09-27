@@ -17,13 +17,13 @@ function EditTruckForm() {
   }, [id]);
 
   if (!truck) return <p className="text-sm text-muted-foreground">Chargement…</p>;
-  return <TruckForm truck={truck} onSaved={() => router.push("/partner")} />;
+  return <TruckForm truck={truck} onSaved={() => router.push("/partner?tab=camions")} />;
 }
 
 export default function EditTruckPage() {
   return (
     <SessionGate role="partner">
-      <div className="page-shell max-w-2xl py-12">
+      <div className="page-shell max-w-2xl py-10">
         <h1 className="font-heading text-2xl font-bold">Modifier le camion</h1>
         <div className="mt-6"><Suspense fallback={<p className="text-sm text-muted-foreground">Chargement…</p>}><EditTruckForm /></Suspense></div>
       </div>

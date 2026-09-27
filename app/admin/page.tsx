@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { SessionGate } from "@/components/auth/session-gate";
 import { availabilityLabels } from "@/types/truck";
 import type { Truck } from "@/types/truck";
@@ -18,10 +17,9 @@ function FleetView() {
   const sorted = [...(trucks ?? [])].sort((a, b) => ORDER[a.availability] - ORDER[b.availability]);
 
   return (
-    <div className="page-shell py-12">
+    <div className="page-shell py-10">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-3xl font-bold">Flotte — Badora &amp; partenaires</h1>
-        <div className="flex gap-3"><Link href="/admin/queue" className="focus-ring text-sm font-semibold text-primary">File de validation</Link><Link href="/admin/partners" className="focus-ring text-sm font-semibold text-primary">Partenaires</Link><Link href="/admin/orders" className="focus-ring text-sm font-semibold text-primary">Demandes clients</Link></div>
       </div>
       <div className="mt-8 grid gap-3">
         {sorted.map((truck) => (

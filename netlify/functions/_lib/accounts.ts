@@ -7,6 +7,9 @@ export interface BlobStore {
   setJSON(key: string, value: unknown): Promise<void>;
   get(key: string): Promise<unknown>;
   list(options: { prefix: string }): Promise<{ blobs: { key: string }[] }>;
+  getWithEtag(key: string): Promise<{ data: unknown; etag?: string } | null>;
+  // Écrit seulement si le blob n'a pas changé depuis la lecture ; false sinon.
+  setJSONIfMatch(key: string, value: unknown, etag: string): Promise<boolean>;
 }
 
 // Netlify Blobs renvoie du texte par défaut : on force la lecture en JSON pour tous les stores.
@@ -16,6 +19,14 @@ export function jsonStore(name: string): BlobStore {
     setJSON: (key, value) => store.setJSON(key, value).then(() => undefined),
     get: (key) => store.get(key, { type: "json" }),
     list: (options) => store.list(options),
+    getWithEtag: async (key) => {
+      const result = await store.getWithMetadata(key, { type: "json" });
+      if (!result || result.etag) return result;
+      // Le bac à sable local ne renvoie pas l'ETag à la lecture, mais bien dans les listes.
+      const { blobs } = await store.list({ prefix: key });
+      return { data: result.data, etag: blobs.find((blob) => blob.key === key)?.etag };
+    },
+    setJSONIfMatch: (key, value, etag) => store.setJSON(key, value, { onlyIfMatch: etag }).then(({ modified }) => modified),
   };
 }
 

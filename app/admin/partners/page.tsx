@@ -29,7 +29,7 @@ function PartnersAdmin() {
   };
 
   return (
-    <div className="page-shell py-12">
+    <div className="page-shell py-10">
       <h1 className="font-heading text-3xl font-bold">Partenaires</h1>
       <form onSubmit={submit} className="mt-6 grid max-w-md gap-4 rounded-2xl border border-primary/10 bg-white p-5">
         <div><Label>Nom</Label><Input value={form.displayName} onChange={(event) => setForm((current) => ({ ...current, displayName: event.target.value }))} required /></div>

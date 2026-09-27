@@ -33,6 +33,53 @@ export async function listOrders(store: BlobStore = defaultStore()): Promise<Ord
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+export async function findOrderById(id: string, store: BlobStore = defaultStore()): Promise<Order | null> {
+  return ((await store.get(`by-id/${id}`)) as Order | null) ?? null;
+}
+
+export async function saveOrder(order: Order, store: BlobStore = defaultStore()): Promise<void> {
+  await store.setJSON(`by-id/${order.id}`, order);
+}
+
+export function canViewOrder(order: Order, actor: Actor): boolean {
+  return actor.role === "admin"
+    || (actor.role === "producer" && order.producerAccountId === actor.accountId)
+    || (actor.role === "partner" && order.transporterAccountId === actor.accountId);
+}
+
+// Un transporteur ne voit le numéro du producteur qu'après avoir accepté la mission.
+export function missionForViewer(order: Order, actor: Actor): Order {
+  if (actor.role !== "partner" || order.transporterAccountId === actor.accountId) return order;
+  const copy: Partial<Order> = { ...order };
+  delete copy.clientPhone;
+  return copy as Order;
+}
+
+// Lit la mission, applique le changement et n'écrit que si personne ne l'a modifiée entre-temps (ETag).
+// En cas de course, on recommence une fois sur la version à jour : un 2e « accepter » reçoit alors « Mission déjà prise ».
+export async function updateOrderIfUnchanged(
+  id: string,
+  change: (order: Order) => TransitionResult,
+  store: BlobStore = defaultStore(),
+): Promise<TransitionResult | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const current = await store.getWithEtag(`by-id/${id}`);
+    if (!current?.data) return null;
+    const result = change(current.data as Order);
+    if (!result.ok) return result;
+    if (!current.etag) { await saveOrder(result.order, store); return result; }
+    if (await store.setJSONIfMatch(`by-id/${id}`, result.order, current.etag)) return result;
+  }
+  return { ok: false, status: 409, error: "La mission vient d'être modifiée. Rechargez la page." };
+}
+
+export interface TransporterContact { name: string; phone: string }
+
+// Le producteur voit le transporteur (ou son entreprise) et le numéro du transporteur, jamais celui de Badora.
+export function transporterContact(transporter: Account | null): TransporterContact | null {
+  return transporter ? { name: transporter.companyName || transporter.displayName, phone: transporter.phone } : null;
+}
+
 export function orderStatus(order: Order): OrderStatus {
   return order.status ?? "pending";
 }

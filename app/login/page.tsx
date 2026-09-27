@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { homeForRole, type Role } from "@/lib/use-session";
+import { useSession } from "@/lib/use-session";
+import { GuestOnly } from "@/components/auth/session-gate";
 
-export default function LoginPage() {
-  const router = useRouter();
+function LoginForm() {
+  const { refresh } = useSession();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +30,7 @@ export default function LoginPage() {
         setError(response.status === 401 ? "Numéro ou PIN incorrect." : message ?? "Service de connexion indisponible.");
         return;
       }
-      const { role } = (await response.json()) as { role: Role };
-      router.push(homeForRole[role]);
+      await refresh(); // GuestOnly redirige alors vers l'espace du compte
     } catch {
       setError("Service de connexion indisponible.");
     } finally {
@@ -61,3 +60,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default function Page() { return <GuestOnly><LoginForm /></GuestOnly>; }

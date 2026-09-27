@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { vehicleCategories, type VehicleCategory } from "@/data/vehicle-categories";
 import { zones, type Zone } from "@/data/zones";
+import { useSession } from "@/lib/use-session";
 import { cn } from "@/lib/utils";
 import type { PublicAccount } from "@/types/account";
 
@@ -26,6 +27,7 @@ function toForm(account: PublicAccount): Form {
 }
 
 function ProfileForm() {
+  const { refresh } = useSession();
   const [account, setAccount] = useState<PublicAccount | null>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -37,7 +39,7 @@ function ProfileForm() {
       .then((data: PublicAccount | null) => { if (data) { setAccount(data); setForm(toForm(data)); } });
   }, []);
 
-  if (!account || !form) return <p className="page-shell py-12 text-sm text-muted-foreground">Chargement…</p>;
+  if (!account || !form) return <p className="page-shell py-10 text-sm text-muted-foreground">Chargement…</p>;
 
   const set = (key: "displayName" | "phone" | "companyName" | "vehicleCapacityTons" | "mainZone" | "mainLocation") =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [key]: event.target.value });
@@ -69,6 +71,7 @@ function ProfileForm() {
       setAccount(data);
       setForm(toForm(data));
       setMessage({ ok: true, text: "Profil enregistré." });
+      void refresh(); // nom affiché dans la barre du haut
     } catch {
       setMessage({ ok: false, text: "Enregistrement impossible pour le moment." });
     } finally {
@@ -77,7 +80,7 @@ function ProfileForm() {
   };
 
   return (
-    <div className="page-shell max-w-2xl py-12">
+    <div className="page-shell max-w-2xl py-10">
       <h1 className="font-heading text-3xl font-bold">Mon profil</h1>
       <form onSubmit={submit} className="mt-8 grid gap-5 rounded-2xl border border-primary/10 bg-white p-5 sm:p-6">
         <div className="grid gap-4 sm:grid-cols-2">

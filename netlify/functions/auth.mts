@@ -5,19 +5,12 @@ import {
 import { verifyPassword } from "./_lib/crypto";
 import { clearAttempts, isLocked, recordAttempt } from "./_lib/rate-limit";
 import { sessionCookieHeader, clearSessionCookieHeader, getActiveSession } from "./_lib/session";
-import { vehicleCategories, type VehicleCategory } from "../../data/vehicle-categories";
-import { zones, type Zone } from "../../data/zones";
+import { categorySchema, optionalText, phoneSchema, pinSchema, zoneSchema } from "./_lib/schemas";
 import type { Account } from "../../types/account";
 
 const LOGIN_LIMIT = { max: 5, windowMinutes: 15, lockMinutes: 15 };
 // Large : beaucoup d'abonnés mobiles partagent la même IP publique.
 const SIGNUP_LIMIT = { max: 20, windowMinutes: 60, lockMinutes: 60 };
-
-const zoneSchema = z.enum(zones.map(({ id }) => id) as [Zone, ...Zone[]]);
-const categorySchema = z.enum(vehicleCategories.map(({ id }) => id) as [VehicleCategory, ...VehicleCategory[]]);
-const phoneSchema = z.string().trim().regex(/^\+?[\d\s-]{7,20}$/);
-const pinSchema = z.string().regex(/^\d{4,6}$/);
-const optionalText = (max: number) => z.string().trim().max(max).optional();
 
 const signupSchema = z.object({
   phone: phoneSchema,

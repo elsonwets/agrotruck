@@ -1,15 +1,8 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { createOrder, listOrders } from "./orders";
 import type { BlobStore } from "./accounts";
+import { fakeStore } from "./test-store";
 
-function fakeStore(): BlobStore {
-  const data = new Map<string, string>();
-  return {
-    async setJSON(key, value) { data.set(key, JSON.stringify(value)); },
-    async get(key) { return data.has(key) ? JSON.parse(data.get(key)!) : null; },
-    async list({ prefix }: { prefix: string }) { return { blobs: [...data.keys()].filter((key) => key.startsWith(prefix)).map((key) => ({ key })) }; },
-  };
-}
 
 const baseInput = {
   requestedTruckCount: 3, truckType: "dump_truck", pickupLocation: "Bissau", dropoffLocation: "Bafatá",

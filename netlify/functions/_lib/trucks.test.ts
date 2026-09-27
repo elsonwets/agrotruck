@@ -1,15 +1,8 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { createTruck, updateTruck, setListingStatus, findTruckById, listPublishedTrucks, listTrucksByOwner, listAllTrucks } from "./trucks";
 import type { BlobStore } from "./accounts";
+import { fakeStore } from "./test-store";
 
-function fakeStore(): BlobStore {
-  const data = new Map<string, string>();
-  return {
-    async setJSON(key, value) { data.set(key, JSON.stringify(value)); },
-    async get(key) { return data.has(key) ? JSON.parse(data.get(key)!) : null; },
-    async list({ prefix }: { prefix: string }) { return { blobs: [...data.keys()].filter((key) => key.startsWith(prefix)).map((key) => ({ key })) }; },
-  };
-}
 
 const baseInput = {
   name: "Scania R450 Plateau", brand: "Scania", model: "R450", type: "flatbed" as const, listingMode: "transport" as const,

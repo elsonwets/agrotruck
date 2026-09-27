@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { zones } from "@/data/zones";
-import { homeForRole } from "@/lib/use-session";
+import { useSession } from "@/lib/use-session";
+import { GuestOnly } from "@/components/auth/session-gate";
 
-export default function SignupPage() {
-  const router = useRouter();
+function SignupForm() {
+  const { refresh } = useSession();
   const [form, setForm] = useState({ displayName: "", phone: "", pin: "", pinConfirm: "", mainZone: "", mainLocation: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,7 +33,7 @@ export default function SignupPage() {
         setError(response.status === 400 ? "Vérifiez le numéro et le PIN (4 à 6 chiffres)." : message ?? "Inscription impossible pour le moment.");
         return;
       }
-      router.push(homeForRole.producer);
+      await refresh(); // GuestOnly redirige alors vers l'espace producteur
     } catch {
       setError("Inscription impossible pour le moment.");
     } finally {
@@ -84,3 +84,5 @@ export default function SignupPage() {
     </div>
   );
 }
+
+export default function Page() { return <GuestOnly><SignupForm /></GuestOnly>; }

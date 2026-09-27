@@ -13,7 +13,7 @@ function OrderHistory() {
   }, []);
 
   return (
-    <div className="page-shell py-12">
+    <div className="page-shell py-10">
       <h1 className="font-heading text-3xl font-bold">Demandes clients</h1>
       <div className="mt-8 grid gap-4">
         {orders?.map((order) => (
