@@ -12,7 +12,7 @@ function FleetView() {
   const [trucks, setTrucks] = useState<Truck[] | null>(null);
 
   useEffect(() => {
-    fetch("/.netlify/functions/trucks?scope=fleet").then((response) => response.json()).then(setTrucks);
+    fetch("/.netlify/functions/trucks?scope=fleet").then((response) => (response.ok ? response.json() : [])).then(setTrucks, () => setTrucks([]));
   }, []);
 
   const sorted = [...(trucks ?? [])].sort((a, b) => ORDER[a.availability] - ORDER[b.availability]);
@@ -21,7 +21,7 @@ function FleetView() {
     <div className="page-shell py-12">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-3xl font-bold">Flotte — Badora &amp; partenaires</h1>
-        <div className="flex gap-3"><Link href="/admin/queue" className="focus-ring text-sm font-semibold text-primary">File de validation</Link><Link href="/admin/partners" className="focus-ring text-sm font-semibold text-primary">Partenaires</Link></div>
+        <div className="flex gap-3"><Link href="/admin/queue" className="focus-ring text-sm font-semibold text-primary">File de validation</Link><Link href="/admin/partners" className="focus-ring text-sm font-semibold text-primary">Partenaires</Link><Link href="/admin/orders" className="focus-ring text-sm font-semibold text-primary">Demandes clients</Link></div>
       </div>
       <div className="mt-8 grid gap-3">
         {sorted.map((truck) => (

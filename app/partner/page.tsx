@@ -3,20 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SessionGate } from "@/components/auth/session-gate";
-import { availabilityLabels } from "@/types/truck";
-import type { Truck } from "@/types/truck";
+import { availabilityLabels, type Truck, type TruckAvailability } from "@/types/truck";
 import { Button } from "@/components/ui/button";
+
+const availabilityOptions = Object.keys(availabilityLabels) as TruckAvailability[];
 
 function PartnerDashboard() {
   const [trucks, setTrucks] = useState<Truck[] | null>(null);
 
   useEffect(() => {
-    fetch("/.netlify/functions/trucks?mine=1").then((response) => response.json()).then(setTrucks);
+    fetch("/.netlify/functions/trucks?mine=1").then((response) => (response.ok ? response.json() : [])).then(setTrucks, () => setTrucks([]));
   }, []);
 
-  const availabilityOptions = ["available", "in_transit", "maintenance"] as const;
-
-  const updateAvailability = async (truck: Truck, availability: (typeof availabilityOptions)[number]) => {
+  const updateAvailability = async (truck: Truck, availability: TruckAvailability) => {
     const response = await fetch(`/.netlify/functions/trucks?id=${truck.id}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
@@ -36,7 +35,7 @@ function PartnerDashboard() {
               <p className="text-xs text-muted-foreground">Statut : {statusLabel(truck.listingStatus)}</p>
             </div>
             <div className="flex items-center gap-3">
-              <select className="focus-ring h-10 rounded-lg border border-primary/15 px-2 text-sm" value={truck.availability} onChange={(event) => updateAvailability(truck, event.target.value as (typeof availabilityOptions)[number])}>
+              <select className="focus-ring h-10 rounded-lg border border-primary/15 px-2 text-sm" value={truck.availability} onChange={(event) => updateAvailability(truck, event.target.value as TruckAvailability)}>
                 {availabilityOptions.map((value) => <option key={value} value={value}>{availabilityLabels[value]}</option>)}
               </select>
               <Button asChild variant="secondary" size="sm"><Link href={`/partner/trucks/edit?id=${truck.id}`}>Modifier</Link></Button>
