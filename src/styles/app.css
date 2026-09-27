@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/* Poppins auto-hébergée : 4 graisses seulement, affichage immédiat avec la police système en attendant. */
+@font-face { font-family: "Poppins"; src: url("/fonts/poppins-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("/fonts/poppins-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("/fonts/poppins-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("/fonts/poppins-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Palette AgroTrucks : vert profond (confiance), jaune récolte (action), rouge du drapeau (accents rares). */
+  --color-brand-50: #eef6f2;
+  --color-brand-100: #d5eadf;
+  --color-brand-200: #a9d3bd;
+  --color-brand-600: #145a45;
+  --color-brand-700: #0f4a38;
+  --color-brand-800: #0b3d2e;
+  --color-brand-900: #072a20;
+  --color-harvest-100: #fdf3c4;
+  --color-harvest-300: #f7dc5c;
+  --color-harvest-400: #f2c500;
+  --color-harvest-700: #7a6200;
+  --color-flag-500: #e0312b;
+  --color-flag-50: #fdecea;
+  --color-ink: #14201b;
+  --color-muted: #5b665f;
+  --color-line: #e3e6e1;
+  --color-canvas: #f7f6f1;
+  --color-surface: #ffffff;
+
+  --radius-card: 1.25rem;
+  --shadow-card: 0 1px 2px rgba(20, 32, 27, 0.04), 0 8px 24px rgba(20, 32, 27, 0.06);
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+/* Pas d'animation : le site reste instantané, y compris sur les téléphones modestes. */
+*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+
+::selection { background: var(--color-harvest-300); color: var(--color-ink); }
+
+:focus-visible { outline: 3px solid var(--color-harvest-400); outline-offset: 2px; border-radius: 0.5rem; }
+
+.container-page { width: min(1200px, 100% - 2rem); margin-inline: auto; }
+.brand-stripe { height: 4px; background: linear-gradient(90deg, var(--color-brand-800) 0 45%, var(--color-harvest-400) 45% 75%, var(--color-flag-500) 75% 100%); }
+.scroll-row { scrollbar-width: thin; scrollbar-color: var(--color-brand-200) transparent; }
+.scroll-row::-webkit-scrollbar { height: 6px; }
+.scroll-row::-webkit-scrollbar-thumb { background: var(--color-brand-200); border-radius: 999px; }
+
+/* Export PDF (impression) : seul le contenu utile est imprimé. */
+@media print {
+  [data-print-hidden], header, footer { display: none !important; }
+  body { background: #fff; }
+}

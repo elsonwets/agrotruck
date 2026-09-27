@@ -1,41 +1,59 @@
-# AgroTrucks by Badora
+# AgroTrucks
 
-Plateforme logistique de Badora : Badora et ses partenaires transporteurs (invités par Badora) publient leurs camions, Badora valide chaque annonce avant publication, et les clients demandent une location — sans prix affiché — via un formulaire qui part ensuite vers WhatsApp.
+Plateforme de transport agricole en Guinée-Bissau : producteurs et coopératives publient leurs besoins de transport, les transporteurs de la région (bon type de véhicule + bonne région) les acceptent, et chacun suit la mission jusqu'à la livraison. Catalogue public de véhicules (transport, location, vente), en **français, anglais et portugais**. Gratuit pendant le lancement.
 
-Le site reste un export statique Next.js déployé sur Netlify (`output: "export"`). Toute la logique dynamique (comptes, camions, modération) vit dans des Netlify Functions (`netlify/functions/`) adossées à Netlify Blobs. Les pages publiques (`/`, `/trucks`, `/trucks/[slug]`, `/location`) sont générées au build à partir de la fonction `trucks` ; les espaces authentifiés (`/login`, `/partner`, `/admin`) appellent les fonctions directement à l'exécution, donc toujours à jour.
+## Stack
+
+- **TanStack Start** (React 19, rendu serveur pour le SEO) — `src/`
+- **Convex** (base de données, logique métier, stockage des photos) — `convex/`
+- **Tailwind CSS 4**, sans bibliothèque d'animation (site rapide sur Android bas de gamme)
+- Hébergement **Vercel** (sortie produite par Nitro)
+- PWA hors ligne : `public/sw.js` + file d'attente IndexedDB (`src/shared/outbox.ts`)
+
+```
+convex/            schéma, fonctions (auth, users, trucks, missions), tests convex-test
+src/shared/        règles métier partagées navigateur + Convex (missions, file hors ligne, régions)
+src/i18n/          dictionnaires fr / en / pt (le français est la référence typée)
+src/routes/        pages : /$lang/... (publiques, espace producteur, transporteur, admin), sitemap.xml, robots.txt
+src/components/    interface
+```
 
 ## Développement
 
 ```bash
 pnpm install
-pnpm dev            # site Next.js sur http://localhost:3000
-pnpm dev:functions  # Netlify Functions + Blobs locaux sur :9999 (second terminal)
+pnpm dev:backend   # Convex : base locale (sans compte) ou votre projet Convex ; écrit VITE_CONVEX_URL dans .env.local
+pnpm dev           # site sur http://localhost:3000 (dans un second terminal)
 ```
 
-En dev, `next dev` relaie `/.netlify/functions/*` vers `:9999` (voir `next.config.ts`) : connexion, espace partenaire, admin et demandes clients fonctionnent donc sur `http://localhost:3000`. Les données locales sont stockées dans `.netlify/blobs-serve`. Sans `URL` défini, les pages publiques utilisent les données de démonstration de `data/trucks.ts`.
+Sans compte Convex, la première commande peut se lancer en base locale : `CONVEX_AGENT_MODE=anonymous npx convex dev`.
+Pour relier votre compte plus tard : `npx convex login` puis `npx convex dev`.
 
-Variables nécessaires dans `.env.local` (voir `.env.example`) :
+### Premier compte administrateur
 
-- `SESSION_SECRET` — secret de signature des cookies de session.
-- `NETLIFY_BUILD_HOOK_URL` — optionnel en local ; déclenche un rebuild du site à chaque publication/modification de camion en production.
-- `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_AGROTRUCK_WHATSAPP` — inchangés.
-
-## Comptes
-
-Les producteurs et coopératives s'inscrivent eux-mêmes sur `/inscription` (téléphone + PIN de 4 à 6 chiffres). Les transporteurs (`partner`) ne s'inscrivent pas : un compte `admin` les crée depuis `/admin/users`. Connexion limitée à 5 essais par 15 minutes et par numéro. Pour créer un compte en ligne de commande (bac à sable local, ou store Netlify si `NETLIFY_SITE_ID` / contexte Blobs est défini) :
+Producteurs et transporteurs s'inscrivent eux-mêmes sur `/{langue}/signup`. L'administrateur se crée une seule fois :
 
 ```bash
-pnpm seed:account +245955000100 "Badora" "un-mot-de-passe-fort"             # admin
-pnpm seed:account +245955000200 "Transports X" "mot-de-passe" partner       # partenaire
-pnpm seed:account +245955000300 "Coop Pirada" "1234" producer               # producteur
+npx convex run users:bootstrapAdmin '{"phone":"+245…","pin":"123456","displayName":"Administrateur"}'
 ```
 
-Puis connectez-vous sur `/login` : un admin arrive sur `/admin`, un partenaire sur `/partner`, un producteur sur `/profil`.
+(Refusé dès qu'un administrateur existe.)
 
 ## Vérifications
 
 ```bash
-pnpm lint
-pnpm test
+pnpm check   # typecheck + lint + tests (règles partagées et fonctions Convex)
 pnpm build
 ```
+
+## Mise en ligne (Vercel)
+
+1. Créer un projet Convex de production : `npx convex deploy` (ou depuis le tableau de bord Convex), récupérer une **Deploy Key**.
+2. Sur Vercel : importer le dépôt, commande de build
+   `npx convex deploy --cmd 'pnpm build'`,
+   variables d'environnement `CONVEX_DEPLOY_KEY` (production) et `VITE_SITE_URL` (ex. `https://agro-truck.com`).
+3. Créer l'administrateur sur la base de production avec `npx convex run --prod users:bootstrapAdmin …`.
+
+## SEO
+
+Chaque page publique a titre, description, URL canonique, `hreflang` (fr, en, pt, x-default), Open Graph, Twitter et données structurées (Organization, WebSite, FAQPage, Vehicle, BreadcrumbList). `/sitemap.xml` liste toutes les pages publiques et annonces dans les 3 langues ; `/robots.txt` exclut les espaces privés. `/` redirige vers la langue du navigateur (portugais par défaut).
