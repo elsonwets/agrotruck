@@ -1,3 +1,4 @@
+import { findAccountById } from "./accounts";
 import { signSession, verifySession, type SessionPayload } from "./crypto";
 
 export const SESSION_COOKIE_NAME = "agrotruck_session";
@@ -18,4 +19,13 @@ export function getSessionFromRequest(request: Request): SessionPayload | null {
   const match = header.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${SESSION_COOKIE_NAME}=`));
   if (!match) return null;
   return verifySession(match.slice(SESSION_COOKIE_NAME.length + 1));
+}
+
+// Session valide ET compte toujours actif : un compte bloqué perd l'accès même avec un cookie encore valide.
+export async function getActiveSession(request: Request): Promise<SessionPayload | null> {
+  const session = getSessionFromRequest(request);
+  if (!session) return null;
+  const account = await findAccountById(session.accountId);
+  if (!account || account.disabled) return null;
+  return { accountId: account.id, role: account.role, displayName: account.displayName };
 }

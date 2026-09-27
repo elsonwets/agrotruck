@@ -8,10 +8,11 @@ Le site reste un export statique Next.js déployé sur Netlify (`output: "export
 
 ```bash
 pnpm install
-pnpm dev
+pnpm dev            # site Next.js sur http://localhost:3000
+pnpm dev:functions  # Netlify Functions + Blobs locaux sur :9999 (second terminal)
 ```
 
-L'application est disponible sur `http://localhost:3000`. `pnpm dev` seul ne sert pas les Netlify Functions — sans `URL` défini dans l'environnement, `lib/truck-directory.ts` retombe sur les données de démonstration de `data/trucks.ts`. Pour travailler sur les comptes, la publication ou la modération, utilisez `netlify dev` (Netlify CLI), qui sert le site et les fonctions ensemble.
+En dev, `next dev` relaie `/.netlify/functions/*` vers `:9999` (voir `next.config.ts`) : connexion, espace partenaire, admin et demandes clients fonctionnent donc sur `http://localhost:3000`. Les données locales sont stockées dans `.netlify/blobs-serve`. Sans `URL` défini, les pages publiques utilisent les données de démonstration de `data/trucks.ts`.
 
 Variables nécessaires dans `.env.local` (voir `.env.example`) :
 
@@ -21,11 +22,15 @@ Variables nécessaires dans `.env.local` (voir `.env.example`) :
 
 ## Comptes
 
-Aucune inscription libre. Seul un compte `admin` peut créer un compte `partner` (depuis `/admin/partners`). Pour créer le premier compte admin :
+Les producteurs et coopératives s'inscrivent eux-mêmes sur `/inscription` (téléphone + PIN de 4 à 6 chiffres). Les transporteurs (`partner`) ne s'inscrivent pas : un compte `admin` les crée depuis `/admin/partners`. Connexion limitée à 5 essais par 15 minutes et par numéro. Pour créer un compte en ligne de commande (bac à sable local, ou store Netlify si `NETLIFY_SITE_ID` / contexte Blobs est défini) :
 
 ```bash
-pnpm seed:admin +245955000100 "Badora" "un-mot-de-passe-fort"
+pnpm seed:account +245955000100 "Badora" "un-mot-de-passe-fort"             # admin
+pnpm seed:account +245955000200 "Transports X" "mot-de-passe" partner       # partenaire
+pnpm seed:account +245955000300 "Coop Pirada" "1234" producer               # producteur
 ```
+
+Puis connectez-vous sur `/login` : un admin arrive sur `/admin`, un partenaire sur `/partner`, un producteur sur `/profil`.
 
 ## Vérifications
 

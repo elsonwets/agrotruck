@@ -4,7 +4,7 @@ import {
   listPublishedTrucks, listTrucksByOwner, listAllTrucks,
 } from "./_lib/trucks";
 import { triggerRebuild } from "./_lib/rebuild";
-import { getSessionFromRequest } from "./_lib/session";
+import { getActiveSession } from "./_lib/session";
 import type { Truck } from "../../types/truck";
 
 const truckInputSchema = z.object({
@@ -41,7 +41,7 @@ const handler = async (request: Request) => {
 export default handler;
 
 async function handleGet(request: Request, url: URL) {
-  const session = getSessionFromRequest(request);
+  const session = await getActiveSession(request);
 
   if (url.searchParams.get("mine")) {
     if (!session) return json({ error: "Non connecté" }, 401);
@@ -68,7 +68,7 @@ async function handleGet(request: Request, url: URL) {
 }
 
 async function handleCreate(request: Request) {
-  const session = getSessionFromRequest(request);
+  const session = await getActiveSession(request);
   if (!session) return json({ error: "Non connecté" }, 401);
   const parsed = truckInputSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return json({ error: "Champs invalides", issues: parsed.error.issues }, 400);
@@ -79,7 +79,7 @@ async function handleCreate(request: Request) {
 async function handleUpdate(request: Request, url: URL) {
   const id = url.searchParams.get("id");
   if (!id) return json({ error: "id requis" }, 400);
-  const session = getSessionFromRequest(request);
+  const session = await getActiveSession(request);
   if (!session) return json({ error: "Non connecté" }, 401);
   const existing = await findTruckById(id);
   if (!existing) return json({ error: "Camion introuvable" }, 404);
@@ -92,7 +92,7 @@ async function handleUpdate(request: Request, url: URL) {
 }
 
 async function handleModerate(request: Request, url: URL) {
-  const session = getSessionFromRequest(request);
+  const session = await getActiveSession(request);
   if (session?.role !== "admin") return json({ error: "Réservé à Badora" }, 403);
   const id = url.searchParams.get("id")!;
   const action = url.searchParams.get("action");

@@ -1,10 +1,9 @@
-import { getStore } from "@netlify/blobs";
 import { randomUUID } from "node:crypto";
 import type { Truck, TruckListingStatus } from "../../../types/truck";
-import type { BlobStore } from "./accounts";
+import { jsonStore, type BlobStore } from "./accounts";
 
 function defaultStore(): BlobStore {
-  return getStore("agrotruck-trucks") as unknown as BlobStore;
+  return jsonStore("agrotruck-trucks");
 }
 
 type TruckInput = Omit<Truck, "id" | "slug" | "ownerAccountId" | "listingStatus">;

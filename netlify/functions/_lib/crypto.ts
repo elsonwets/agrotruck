@@ -1,5 +1,6 @@
 import { randomBytes, scrypt, timingSafeEqual, createHmac } from "node:crypto";
 import { promisify } from "node:util";
+import type { AccountRole } from "../../../types/account";
 
 const scryptAsync = promisify(scrypt);
 const KEY_LENGTH = 64;
@@ -20,7 +21,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 export interface SessionPayload {
   accountId: string;
-  role: "admin" | "partner";
+  role: AccountRole;
   displayName: string;
 }
 

@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-export type Role = "admin" | "partner";
+export type Role = "admin" | "partner" | "producer";
 export interface Session { accountId: string; role: Role; displayName: string }
 type Status = "loading" | "authenticated" | "unauthenticated";
+
+// Espace d'accueil de chaque rôle après connexion.
+export const homeForRole: Record<Role, string> = { admin: "/admin", partner: "/partner", producer: "/profil" };
 
 export function useSession() {
   const [status, setStatus] = useState<Status>("loading");
