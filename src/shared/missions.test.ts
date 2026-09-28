@@ -50,8 +50,8 @@ describe("transporterCategories / matchesTransporter", () => {
 });
 
 describe("transition", () => {
-  it("runs accept, loaded, delivered with history", () => {
-    const assigned = applied(transition(mission, "accept", transporterActor, { at }));
+  it("runs choose (offer retained), loaded, delivered with history", () => {
+    const assigned = applied(transition(mission, "choose", producerActor, { at, transporterId: "tr-1" }));
     expect(assigned.transporterId).toBe("tr-1");
     const loaded = applied(transition(assigned, "loaded", transporterActor, { at }));
     const delivered = applied(transition(loaded, "delivered", transporterActor, { at, comment: "Port" }));
@@ -63,26 +63,28 @@ describe("transition", () => {
   });
 
   it("does not mutate the original mission", () => {
-    transition(mission, "accept", transporterActor, { at });
+    transition(mission, "choose", producerActor, { at, transporterId: "tr-1" });
     expect(mission.status).toBe("pending");
     expect(mission.events).toHaveLength(1);
   });
 
-  it("refuses a mission already taken, and non-transporters", () => {
-    const assigned = applied(transition(mission, "accept", transporterActor, { at }));
-    expect(transition(assigned, "accept", { userId: "tr-2", role: "transporter" })).toEqual({ ok: false, status: 409, error: "already_taken" });
-    expect(transition(mission, "accept", producerActor)).toMatchObject({ ok: false, status: 403 });
+  it("lets only the producer who owns the mission choose an offer, once", () => {
+    const assigned = applied(transition(mission, "choose", producerActor, { at, transporterId: "tr-1" }));
+    expect(transition(assigned, "choose", producerActor, { transporterId: "tr-2" })).toEqual({ ok: false, status: 409, error: "already_taken" });
+    expect(transition(mission, "choose", transporterActor, { transporterId: "tr-1" })).toMatchObject({ ok: false, status: 403 });
+    expect(transition(mission, "choose", { userId: "prod-2", role: "producer" }, { transporterId: "tr-1" })).toMatchObject({ ok: false, status: 403 });
+    expect(transition(mission, "choose", producerActor)).toMatchObject({ ok: false, error: "transporter_required" });
   });
 
   it("only lets the assigned transporter, the producer or the admin mark it loaded", () => {
-    const assigned = applied(transition(mission, "accept", transporterActor, { at }));
+    const assigned = applied(transition(mission, "choose", producerActor, { at, transporterId: "tr-1" }));
     expect(transition(assigned, "loaded", { userId: "tr-2", role: "transporter" })).toMatchObject({ ok: false, status: 403 });
     expect(transition(assigned, "loaded", producerActor).ok).toBe(true);
     expect(transition(mission, "loaded", transporterActor)).toMatchObject({ ok: false, status: 403 });
   });
 
   it("allows one second delivery confirmation from the other party", () => {
-    const loaded = applied(transition(applied(transition(mission, "accept", transporterActor, { at })), "loaded", transporterActor, { at }));
+    const loaded = applied(transition(applied(transition(mission, "choose", producerActor, { at, transporterId: "tr-1" })), "loaded", transporterActor, { at }));
     const delivered = applied(transition(loaded, "delivered", transporterActor, { at }));
     const confirmed = applied(transition(delivered, "delivered", producerActor, { at }));
     expect(confirmed.events.filter((event) => event.type === "delivered").map((event) => event.userId)).toEqual(["tr-1", "prod-1"]);
@@ -90,7 +92,7 @@ describe("transition", () => {
   });
 
   it("refuses delivery before loading", () => {
-    const assigned = applied(transition(mission, "accept", transporterActor, { at }));
+    const assigned = applied(transition(mission, "choose", producerActor, { at, transporterId: "tr-1" }));
     expect(transition(assigned, "delivered", transporterActor)).toMatchObject({ error: "not_in_transit" });
   });
 
@@ -103,7 +105,7 @@ describe("transition", () => {
   it("lets the producer or the admin cancel before loading only", () => {
     expect(applied(transition(mission, "cancel", producerActor, { at })).status).toBe("cancelled");
     expect(transition(mission, "cancel", { userId: "prod-2", role: "producer" })).toMatchObject({ ok: false, status: 403 });
-    const loaded = applied(transition(applied(transition(mission, "accept", transporterActor, { at })), "loaded", transporterActor, { at }));
+    const loaded = applied(transition(applied(transition(mission, "choose", producerActor, { at, transporterId: "tr-1" })), "loaded", transporterActor, { at }));
     expect(transition(loaded, "cancel", adminActor)).toMatchObject({ ok: false, error: "cannot_cancel" });
   });
 });

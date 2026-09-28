@@ -38,10 +38,10 @@ export function EmptyState({ title, text, action }: { title: string; text?: stri
 }
 
 export function Tabs<T extends string>({ value, options, onChange, label }: { value: T; options: readonly (readonly [T, string])[]; onChange: (value: T) => void; label: string }) {
-  return <div role="group" aria-label={label} className="inline-flex rounded-xl border border-line bg-white p-1">
+  return <div role="group" aria-label={label} className="scroll-row inline-flex max-w-full overflow-x-auto rounded-xl border border-line bg-white p-1">
     {options.map(([option, text]) => (
       <button key={option} type="button" aria-pressed={value === option} onClick={() => onChange(option)}
-        className={cn("min-h-10 rounded-lg px-4 text-sm font-semibold", value === option ? "bg-brand-800 text-white" : "text-muted hover:text-ink")}>
+        className={cn("min-h-10 shrink-0 whitespace-nowrap rounded-lg px-4 text-sm font-semibold", value === option ? "bg-brand-800 text-white" : "text-muted hover:text-ink")}>
         {text}
       </button>
     ))}

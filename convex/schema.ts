@@ -1,7 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
-  vAvailability, vCategory, vCategoryOrAny, vLang, vListingMode, vMissionEvent, vMissionStatus, vProductType, vRole, vZone,
+  vAvailability, vCategory, vCategoryOrAny, vLang, vListingMode, vMissionEvent, vMissionStatus, vOfferStatus, vProductType, vRole, vZone,
 } from "./lib/validators";
 
 export default defineSchema({
@@ -87,12 +87,30 @@ export default defineSchema({
     comment: v.string(),
     status: vMissionStatus,
     events: v.array(vMissionEvent), // 6 au plus (création, assignation, chargement, 2 livraisons, annulation)
+    // Offre retenue par le producteur : prix convenu (FCFA) et camion proposé.
+    acceptedOfferId: v.optional(v.id("offers")),
+    agreedPrice: v.optional(v.number()),
+    truckId: v.optional(v.id("trucks")),
     updatedAt: v.optional(v.number()),
   })
     .index("by_producerId", ["producerId"])
     .index("by_transporterId", ["transporterId"])
     .index("by_status", ["status"])
     .index("by_clientRequestId", ["clientRequestId"]),
+
+  // Offres des transporteurs sur une mission (une par transporteur et par mission, modifiable tant qu'elle attend).
+  offers: defineTable({
+    missionId: v.id("missions"),
+    transporterId: v.id("users"),
+    truckId: v.optional(v.id("trucks")),
+    price: v.number(), // FCFA
+    message: v.string(),
+    status: vOfferStatus,
+    updatedAt: v.number(),
+  })
+    .index("by_missionId", ["missionId"])
+    .index("by_transporterId", ["transporterId"])
+    .index("by_missionId_and_transporterId", ["missionId", "transporterId"]),
 
   // Avis des producteurs sur un camion (un par producteur et par camion).
   reviews: defineTable({

@@ -11,10 +11,12 @@
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as lib_attempts from "../lib/attempts.js";
+import type * as lib_missionView from "../lib/missionView.js";
 import type * as lib_security from "../lib/security.js";
 import type * as lib_session from "../lib/session.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as missions from "../missions.js";
+import type * as offers from "../offers.js";
 import type * as trucks from "../trucks.js";
 import type * as users from "../users.js";
 
@@ -28,10 +30,12 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
   "lib/attempts": typeof lib_attempts;
+  "lib/missionView": typeof lib_missionView;
   "lib/security": typeof lib_security;
   "lib/session": typeof lib_session;
   "lib/validators": typeof lib_validators;
   missions: typeof missions;
+  offers: typeof offers;
   trucks: typeof trucks;
   users: typeof users;
 }>;

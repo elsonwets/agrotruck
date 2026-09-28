@@ -1,6 +1,7 @@
 import { cn } from "~/lib/cn";
 
-const control = "block w-full rounded-xl border border-line bg-white px-4 text-[15px] text-ink placeholder:text-muted/70 hover:border-brand-200 focus:border-brand-600 focus:outline-none disabled:bg-canvas";
+// 16 px sur mobile : en dessous, iOS zoome sur le champ à chaque saisie.
+const control = "block w-full rounded-xl border border-line bg-white px-4 text-base sm:text-[15px] text-ink placeholder:text-muted/70 hover:border-brand-200 focus:border-brand-600 focus:outline-none disabled:bg-canvas";
 
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(control, "min-h-12", className)} {...props} />;

@@ -42,7 +42,7 @@ function AdminMissions() {
       new Date(mission.createdAt).toISOString().slice(0, 10), t.missionStatus[mission.status], t.products[mission.productType],
       mission.quantitySacks, mission.quantityKg, zoneLabels[mission.pickupZone], mission.pickupLocation, zoneLabels[mission.dropoffZone], mission.dropoffLocation,
       mission.neededFrom, mission.vehicleCategory === "any" ? t.categories.any : t.categories[mission.vehicleCategory].label,
-      mission.producer?.name, mission.producer?.phone, mission.transporter?.name, mission.transporter?.phone, mission.comment,
+      mission.producer?.name, mission.producer?.phone, mission.transporter?.name, mission.transporter?.phone, mission.agreedPrice, mission.comment,
     ]);
     const url = URL.createObjectURL(new Blob([toCsv([t.admin.csvHeader, ...rows])], { type: "text/csv;charset=utf-8" }));
     const link = Object.assign(document.createElement("a"), { href: url, download: `agrotrucks-missions-${new Date().toISOString().slice(0, 10)}.csv` });

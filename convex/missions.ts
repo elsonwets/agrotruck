@@ -1,47 +1,13 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query, type QueryCtx } from "./_generated/server";
-import type { Doc, Id } from "./_generated/dataModel";
-import { matchesTransporter, transition, type MissionAction } from "../src/shared/missions";
-import type { VehicleCategory } from "../src/shared/domain";
+import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { matchesTransporter, transition } from "../src/shared/missions";
+import { canSee, declinePendingOffers, profileOf, truckCategories, view } from "./lib/missionView";
 import { requireUser } from "./lib/session";
 import { vCategoryOrAny, vProductType, vZone } from "./lib/validators";
 
-// Missions de transport. Chaque mutation Convex est une transaction sérialisable : deux « accepter » simultanés
-// ne peuvent pas réussir tous les deux (le second relit la mission déjà prise et reçoit « already_taken »).
-
-const contact = (user: Doc<"users"> | null, withPhone: boolean) =>
-  user ? { name: user.companyName || user.displayName, ...(withPhone ? { phone: user.phone } : {}) } : null;
-
-async function truckCategories(ctx: QueryCtx, userId: Id<"users">): Promise<VehicleCategory[]> {
-  const trucks = await ctx.db.query("trucks").withIndex("by_ownerId", (q) => q.eq("ownerId", userId)).take(100);
-  return trucks.filter((truck) => !truck.hidden).map((truck) => truck.category);
-}
-
-function profileOf(user: Doc<"users">) {
-  return { id: user._id, role: user.role, disabled: user.disabled, vehicleCategories: user.vehicleCategories, workZones: user.workZones };
-}
-
-// Vue d'une mission selon qui la regarde : le numéro du producteur n'est donné qu'au transporteur assigné.
-async function view(ctx: QueryCtx, mission: Doc<"missions">, viewer: Doc<"users">) {
-  const isAssigned = viewer.role === "transporter" && mission.transporterId === viewer._id;
-  const isOwner = viewer.role === "producer" && mission.producerId === viewer._id;
-  const isAdmin = viewer.role === "admin";
-  const producer = await ctx.db.get("users", mission.producerId);
-  const transporter = mission.transporterId ? await ctx.db.get("users", mission.transporterId) : null;
-  return {
-    ...mission,
-    createdAt: mission._creationTime,
-    producer: contact(producer, isAssigned || isOwner || isAdmin),
-    transporter: contact(transporter, isOwner || isAssigned || isAdmin),
-  };
-}
-
-async function canSee(ctx: QueryCtx, mission: Doc<"missions">, user: Doc<"users">): Promise<boolean> {
-  if (user.role === "admin") return true;
-  if (user.role === "producer") return mission.producerId === user._id;
-  if (mission.transporterId === user._id) return true;
-  return matchesTransporter(mission, profileOf(user), await truckCategories(ctx, user._id));
-}
+// Missions de transport : le producteur publie, les transporteurs font des offres (offers.ts), le producteur en
+// retient une, puis chargement et livraison. Chaque mutation Convex est une transaction sérialisable.
 
 export const create = mutation({
   args: {
@@ -101,7 +67,7 @@ export const mine = query({
   },
 });
 
-// Missions proposées au transporteur : bon type de véhicule ET bonne région de chargement.
+// Missions proposées au transporteur (bon type de véhicule ET bonne région), avec son offre s'il en a fait une.
 export const available = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
@@ -113,6 +79,7 @@ export const available = query({
   },
 });
 
+// Missions attribuées au transporteur (son offre a été retenue, ou assignation par l'admin).
 export const assigned = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
@@ -132,12 +99,12 @@ export const get = query({
   },
 });
 
-// Accepter, assigner, chargé, livré, annuler. Refus = ConvexError({ code }) traduit par l'interface.
+// Assigner (admin), chargé, livré, annuler. Refus = ConvexError({ code }) traduit par l'interface.
 export const act = mutation({
   args: {
     token: v.string(),
     missionId: v.id("missions"),
-    action: v.union(v.literal("accept"), v.literal("assign"), v.literal("loaded"), v.literal("delivered"), v.literal("cancel")),
+    action: v.union(v.literal("assign"), v.literal("loaded"), v.literal("delivered"), v.literal("cancel")),
     at: v.optional(v.number()), // heure réelle de l'action (ex. faite hors ligne)
     comment: v.optional(v.string()),
     transporterId: v.optional(v.id("users")),
@@ -148,16 +115,10 @@ export const act = mutation({
     if (!mission) throw new ConvexError({ code: "not_found" });
     // Idempotence : une action déjà faite par la même personne (ex. rejouée après une coupure réseau) n'est pas refusée.
     const alreadyDone =
-      (action === "accept" && mission.transporterId === user._id && mission.status !== "pending")
-      || (action === "loaded" && mission.status !== "assigned" && mission.events.some((event) => event.type === "loaded" && event.userId === user._id))
+      (action === "loaded" && mission.status !== "assigned" && mission.events.some((event) => event.type === "loaded" && event.userId === user._id))
       || (action === "delivered" && mission.events.some((event) => event.type === "delivered" && event.userId === user._id));
     if (alreadyDone) return view(ctx, mission, user);
-    if (action === "accept") {
-      if (mission.status !== "pending" && mission.transporterId !== user._id) throw new ConvexError({ code: "already_taken" });
-      if (!matchesTransporter(mission, profileOf(user), await truckCategories(ctx, user._id))) throw new ConvexError({ code: "not_offered" });
-    } else if (!(await canSee(ctx, mission, user))) {
-      throw new ConvexError({ code: "not_found" });
-    }
+    if (!(await canSee(ctx, mission, user))) throw new ConvexError({ code: "not_found" });
     if (action === "assign") {
       const transporter = transporterId ? await ctx.db.get("users", transporterId) : null;
       if (!transporter || transporter.role !== "transporter" || transporter.disabled) throw new ConvexError({ code: "transporter_required" });
@@ -165,7 +126,7 @@ export const act = mutation({
     const now = Date.now();
     // L'heure fournie est gardée si elle est plausible : ni dans le futur, ni avant la création de la mission.
     const when = at !== undefined && at <= now + 60_000 && at >= mission._creationTime ? at : now;
-    const result = transition(mission, action as MissionAction, { userId: user._id, role: user.role }, {
+    const result = transition(mission, action, { userId: user._id, role: user.role }, {
       at: when, transporterId, comment: comment?.trim().slice(0, 300) || undefined,
     });
     if (!result.ok) throw new ConvexError({ code: result.error });
@@ -175,7 +136,10 @@ export const act = mutation({
       events: result.mission.events,
       updatedAt: result.mission.updatedAt,
     });
-    return view(ctx, { ...mission, ...result.mission, transporterId: result.mission.transporterId as Id<"users"> | undefined }, user);
+    // Annulée ou attribuée à la main : les offres encore en attente sont refusées.
+    if (action === "cancel" || action === "assign") await declinePendingOffers(ctx, missionId);
+    const updated = await ctx.db.get("missions", missionId);
+    return view(ctx, updated!, user);
   },
 });
 
@@ -195,4 +159,3 @@ export const adminList = query({
     })));
   },
 });
-

@@ -38,7 +38,8 @@ export function PendingBadge() {
   return <Badge tone="outline">{t.offline.pendingBadge}</Badge>;
 }
 
-type CardMission = Pick<MissionView, "status" | "vehicleCategory" | "pickupLocation" | "pickupZone" | "dropoffLocation" | "dropoffZone" | "productType" | "quantitySacks" | "quantityKg" | "neededFrom">;
+type CardMission = Pick<MissionView, "status" | "vehicleCategory" | "pickupLocation" | "pickupZone" | "dropoffLocation" | "dropoffZone" | "productType" | "quantitySacks" | "quantityKg" | "neededFrom">
+  & Partial<Pick<MissionView, "pendingOffers" | "myOffer" | "agreedPrice">>;
 
 export function MissionCard({ mission, link, perspective = "producer", pending, children }: {
   mission: CardMission;
@@ -58,6 +59,12 @@ export function MissionCard({ mission, link, perspective = "producer", pending, 
       <span>{t.products[mission.productType]}{missionQuantity(mission, t) && ` · ${missionQuantity(mission, t)}`}</span>
       <span>· {t.common.day(mission.neededFrom)}</span>
     </p>
+    {(mission.agreedPrice || (mission.status === "pending" && (mission.pendingOffers || mission.myOffer))) && <p className="mt-2 flex flex-wrap gap-1.5">
+      {mission.agreedPrice !== undefined && <Badge tone="brand">{t.offers.agreedPrice} : {t.common.price(mission.agreedPrice)}</Badge>}
+      {mission.status === "pending" && mission.pendingOffers ? <Badge tone="harvest">{t.offers.count(mission.pendingOffers)}</Badge> : null}
+      {mission.status === "pending" && mission.myOffer && mission.myOffer.status !== "withdrawn"
+        ? <Badge tone={mission.myOffer.status === "pending" ? "harvest" : "neutral"}>{t.offers.yourOffer} : {t.common.price(mission.myOffer.price)}</Badge> : null}
+    </p>}
   </>;
   return <Card className={pending ? "border-dashed p-5" : "p-5 hover:border-brand-200"}>
     {link ? <Link to={link.to} params={link.params} className="block">{summary}</Link> : summary}
@@ -73,6 +80,7 @@ export function MissionFacts({ mission }: { mission: MissionView }) {
     [t.producer.quantity, missionQuantity(mission, t) || "—"],
     [t.producer.date, t.common.day(mission.neededFrom)],
     [t.producer.vehicle, vehicle],
+    ...(mission.agreedPrice !== undefined ? [[t.offers.agreedPrice, t.common.price(mission.agreedPrice)]] : []),
   ];
   return <Card className="p-5">
     <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">

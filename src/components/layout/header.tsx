@@ -67,7 +67,7 @@ export function Header() {
             {t.nav[key]}
           </Link>
         ))}
-        <div className="mt-3 border-t border-line pt-4"><LanguageSwitcher /></div>
+        <div className="mt-3 border-t border-line pt-4"><LanguageSwitcher align="left" /></div>
         <div className="mt-3 grid gap-2">
           {session && <>
             <div className="flex items-center gap-3 rounded-xl bg-canvas p-3">

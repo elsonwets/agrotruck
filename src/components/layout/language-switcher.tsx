@@ -5,7 +5,7 @@ import { dictFor } from "~/i18n";
 import { useLang, useT } from "~/lib/i18n";
 
 // Même page dans une autre langue : on remplace seulement le premier segment de l'URL.
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ align = "right" }: { align?: "left" | "right" }) {
   const lang = useLang();
   const t = useT();
   const { pathname, searchStr } = useLocation();
@@ -16,7 +16,7 @@ export function LanguageSwitcher() {
       <Globe className="size-4 text-brand-700" aria-hidden="true" />
       {lang.toUpperCase()}
     </summary>
-    <div className="absolute right-0 z-50 mt-2 w-44 rounded-xl border border-line bg-white p-1.5 shadow-[var(--shadow-card)]">
+    <div className={`absolute ${align === "left" ? "left-0" : "right-0"} z-50 mt-2 w-44 rounded-xl border border-line bg-white p-1.5 shadow-[var(--shadow-card)]`}>
       {LANGS.map((other) => (
         <a key={other} href={hrefFor(other)} hrefLang={other} lang={other} aria-current={other === lang ? "true" : undefined}
           className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-brand-50">

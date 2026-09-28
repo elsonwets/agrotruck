@@ -3,6 +3,7 @@ import {
   AVAILABILITIES, LANGS, LISTING_MODES, MISSION_EVENT_TYPES, MISSION_STATUSES, PRODUCT_TYPES, ROLES, VEHICLE_CATEGORIES,
 } from "../../src/shared/domain";
 import { zones } from "../../src/shared/zones";
+import { OFFER_STATUSES } from "../../src/shared/offers";
 
 // Validateurs Convex construits à partir des mêmes listes que l'interface : une seule source de vérité.
 const literals = <const T extends readonly string[]>(values: T) =>
@@ -18,6 +19,7 @@ export const vProductType = literals(PRODUCT_TYPES);
 export const vMissionStatus = literals(MISSION_STATUSES);
 export const vMissionEventType = literals(MISSION_EVENT_TYPES);
 export const vZone = literals(zones.map(({ id }) => id));
+export const vOfferStatus = literals(OFFER_STATUSES);
 
 export const vMissionEvent = v.object({
   type: vMissionEventType,

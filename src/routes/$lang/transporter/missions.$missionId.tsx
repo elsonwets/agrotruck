@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useMutation } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -8,12 +7,11 @@ import { ContactCard, MissionFacts, MissionHistory, PendingBadge, StatusBadge, m
 import { SessionGate } from "~/components/session-gate";
 import { Button } from "~/components/ui/button";
 import { Card, EmptyState, PageTitle } from "~/components/ui/card";
+import { OfferForm, TruckLine } from "~/components/missions/offers";
 import { Field, FormMessage, Input } from "~/components/ui/form";
 import { useCachedQuery } from "~/lib/cached-query";
-import { errorCode } from "~/lib/errors";
 import { useLang, useT } from "~/lib/i18n";
 import { performQueueable, withQueuedActions } from "~/lib/mission-actions";
-import { isOnline } from "~/lib/outbox-client";
 import { privateHead } from "~/lib/private-route";
 import { useSession, useToken } from "~/lib/session";
 
@@ -37,8 +35,7 @@ function TransporterMission() {
   const token = useToken();
   const { session } = useSession();
   const missionId = Route.useParams().missionId as Id<"missions">;
-  const { data: server } = useCachedQuery(api.missions.get, { token, missionId }, `mission:${missionId}`);
-  const accept = useMutation(api.missions.act);
+  const { data: server } = useCachedQuery(api.missions.get, { token, missionId }, `mission:${session?.userId}:${missionId}`);
   const [local, setLocal] = useState<{ mission: MissionView; pending: number } | null>(null);
   const [time, setTime] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -60,15 +57,6 @@ function TransporterMission() {
   const confirmed = mission.events.some((event) => event.type === "delivered" && event.userId === session.userId);
   const next = mine ? (mission.status === "assigned" ? "loaded" : mission.status === "loaded" || (mission.status === "delivered" && !confirmed) ? "delivered" : null) : null;
 
-  const onAccept = async () => {
-    if (!isOnline()) { setError(t.common.offlineAction); return; }
-    setBusy(true);
-    setError(null);
-    try { await accept({ token, missionId, action: "accept" }); }
-    catch (reason) { const code = errorCode(reason); setError(code ? t.errors[code] ?? t.common.genericError : t.common.offlineAction); }
-    finally { setBusy(false); }
-  };
-
   const act = async (action: "loaded" | "delivered") => {
     setBusy(true);
     setError(null);
@@ -87,10 +75,12 @@ function TransporterMission() {
     <div className="mt-6 grid gap-4">
       <MissionFacts mission={mission} />
       <ContactCard title={t.transporter.producer} contact={mission.producer} empty={t.transporter.producerHidden} />
+      {mine && mission.truck && <Card className="p-5"><p className="mb-3 font-semibold text-muted">{t.offers.truck}</p><TruckLine truck={mission.truck} /></Card>}
+      {/* Offre : à envoyer tant que le producteur n'a pas choisi ; « non retenue » s'il en a choisi une autre. */}
+      {!mine && (mission.status === "pending" || mission.myOffer?.status === "declined") && <OfferForm mission={mission} />}
     </div>
 
     <div className="mt-6 grid gap-3">
-      {mission.status === "pending" && <Button size="lg" onClick={onAccept} disabled={busy}>{busy ? t.transporter.accepting : t.transporter.acceptMission}</Button>}
       {next && <Card className="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-end">
         <Field id="mission-time" label={t.transporter.time}><Input id="mission-time" type="time" value={time} onChange={(event) => setTime(event.target.value)} /></Field>
         <Button size="lg" onClick={() => act(next)} disabled={busy}>{next === "loaded" ? t.transporter.loaded : mission.status === "delivered" ? t.producer.confirmDelivery : t.transporter.delivered}</Button>

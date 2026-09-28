@@ -54,6 +54,11 @@ body {
 :focus-visible { outline: 3px solid var(--color-harvest-400); outline-offset: 2px; border-radius: 0.5rem; }
 
 .container-page { width: min(1200px, 100% - 2rem); margin-inline: auto; }
+
+/* Mobile : un enfant de grille ne doit jamais s'élargir à la taille de son contenu (ex. rangée défilante des types
+   de véhicules), sinon toute la page déborde horizontalement. */
+.grid > * { min-width: 0; }
+html, body { overflow-x: clip; }
 .brand-stripe { height: 4px; background: linear-gradient(90deg, var(--color-brand-800) 0 45%, var(--color-harvest-400) 45% 75%, var(--color-flag-500) 75% 100%); }
 .scroll-row { scrollbar-width: thin; scrollbar-color: var(--color-brand-200) transparent; }
 .scroll-row::-webkit-scrollbar { height: 6px; }

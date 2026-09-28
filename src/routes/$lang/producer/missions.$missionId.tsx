@@ -7,7 +7,8 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { ContactCard, MissionFacts, MissionHistory, PendingBadge, StatusBadge, missionRoute, type MissionView } from "~/components/missions/parts";
 import { SessionGate } from "~/components/session-gate";
 import { Button } from "~/components/ui/button";
-import { EmptyState, PageTitle } from "~/components/ui/card";
+import { Card, EmptyState, PageTitle } from "~/components/ui/card";
+import { OffersPanel, TruckLine } from "~/components/missions/offers";
 import { FormMessage } from "~/components/ui/form";
 import { useCachedQuery } from "~/lib/cached-query";
 import { errorMessage } from "~/lib/errors";
@@ -28,7 +29,7 @@ function ProducerMission() {
   const token = useToken();
   const { session } = useSession();
   const missionId = Route.useParams().missionId as Id<"missions">;
-  const { data: server } = useCachedQuery(api.missions.get, { token, missionId }, `mission:${missionId}`);
+  const { data: server } = useCachedQuery(api.missions.get, { token, missionId }, `mission:${session?.userId}:${missionId}`);
   const cancel = useMutation(api.missions.act);
   const [local, setLocal] = useState<{ mission: MissionView; pending: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,8 +75,13 @@ function ProducerMission() {
 
     <div className="mt-6 grid gap-4">
       <MissionFacts mission={mission} />
-      <ContactCard title={t.producer.transporter} contact={mission.transporter}
-        empty={mission.status === "cancelled" ? t.missionStatus.cancelled : t.producer.waitingTransporter} />
+      {mission.status === "pending"
+        ? <OffersPanel mission={mission} />
+        : <>
+            <ContactCard title={t.producer.transporter} contact={mission.transporter}
+              empty={mission.status === "cancelled" ? t.missionStatus.cancelled : t.producer.waitingTransporter} />
+            {mission.truck && <Card className="p-5"><p className="mb-3 font-semibold text-muted">{t.offers.truck}</p><TruckLine truck={mission.truck} /></Card>}
+          </>}
     </div>
 
     <div className="mt-6 grid gap-2">

@@ -28,7 +28,7 @@ export interface MissionFacts {
   createdAt: number;
 }
 
-export type MissionAction = "accept" | "assign" | "loaded" | "delivered" | "cancel";
+export type MissionAction = "choose" | "assign" | "loaded" | "delivered" | "cancel";
 export interface Actor { userId: string; role: Role }
 
 export type TransitionError =
@@ -41,7 +41,8 @@ export function isFinished(mission: Pick<MissionCore, "status">): boolean {
   return mission.status === "delivered" || mission.status === "cancelled";
 }
 
-// Machine à états. Le contrôle « type + région » de « accept » est fait par l'appelant (matchesTransporter).
+// Machine à états. Les transporteurs font des offres (voir offers.ts) ; le producteur en choisit une (« choose »),
+// ce qui assigne la mission au transporteur de cette offre. L'admin peut aussi assigner à la main (« assign »).
 export function transition<T extends MissionCore>(
   mission: T,
   action: MissionAction,
@@ -67,10 +68,11 @@ export function transition<T extends MissionCore>(
   });
 
   switch (action) {
-    case "accept":
-      if (actor.role !== "transporter") return forbidden;
+    case "choose":
+      if (!isOwner) return forbidden;
+      if (!options.transporterId) return fail(400, "transporter_required");
       if (status !== "pending") return fail(409, "already_taken");
-      return apply("assigned", "assigned", { transporterId: actor.userId });
+      return apply("assigned", "assigned", { transporterId: options.transporterId });
     case "assign":
       if (!isAdmin) return forbidden;
       if (!options.transporterId) return fail(400, "transporter_required");
