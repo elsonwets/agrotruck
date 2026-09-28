@@ -1,5 +1,6 @@
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext, useParams } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
+import { Analytics } from "@vercel/analytics/react";
 import { DEFAULT_LANG, isLang } from "~/shared/domain";
 import appCss from "~/styles/app.css?url";
 
@@ -34,6 +35,7 @@ function RootDocument() {
       </head>
       <body className="flex min-h-dvh flex-col">
         <Outlet />
+        <Analytics />
         <Scripts />
       </body>
     </html>
