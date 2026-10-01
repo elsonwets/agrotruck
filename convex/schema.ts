@@ -1,7 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
-  vAvailability, vCategory, vCategoryOrAny, vLang, vListingMode, vMissionEvent, vMissionStatus, vOfferStatus, vProductType, vRole, vZone,
+  vAvailability, vCategory, vCategoryOrAny, vGps, vLang, vListingMode, vMissionEvent, vMissionStatus, vOfferStatus, vProductType, vRole, vZone,
 } from "./lib/validators";
 
 export default defineSchema({
@@ -78,6 +78,7 @@ export default defineSchema({
     vehicleCategory: vCategoryOrAny,
     pickupZone: vZone,
     pickupLocation: v.string(),
+    pickupGps: v.optional(vGps), // position du téléphone du producteur au moment de la demande
     dropoffZone: vZone,
     dropoffLocation: v.string(),
     productType: vProductType,

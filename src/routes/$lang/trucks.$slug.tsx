@@ -2,17 +2,15 @@ import { useState } from "react";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
-import { useMutation } from "convex/react";
 import { ArrowLeft, Check, MapPin, MessageCircle, Phone, Scale, Star } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Badge, Card } from "~/components/ui/card";
-import { Button, buttonClass } from "~/components/ui/button";
-import { FormMessage } from "~/components/ui/form";
+import { buttonClass } from "~/components/ui/button";
+import { RatingForm, criteria, type RatingSummary } from "~/components/trucks/rating-form";
 import { VehicleIcon } from "~/components/vehicle-icon";
 import { dictFor } from "~/i18n";
 import { cn, telUrl, whatsappUrl } from "~/lib/cn";
-import { errorMessage } from "~/lib/errors";
 import { useLang, useT } from "~/lib/i18n";
 import { breadcrumbJsonLd, seo, SITE_URL } from "~/lib/seo";
 import { useSession } from "~/lib/session";
@@ -147,28 +145,13 @@ function TagList({ title, values }: { title: string; values: string[] }) {
   </section>;
 }
 
-type Rating = { count: number; vehicleQuality: number; professionalism: number; reliability: number; overall: number } | null;
-const criteria = ["vehicleQuality", "professionalism", "reliability"] as const;
+type Rating = RatingSummary;
 
 function Ratings({ truckId, rating: initial }: { truckId: Id<"trucks">; rating: Rating }) {
   const t = useT();
   const lang = useLang();
-  const { session, token } = useSession();
-  const rate = useMutation(api.trucks.rate);
+  const { session } = useSession();
   const [rating, setRating] = useState(initial);
-  const [scores, setScores] = useState({ vehicleQuality: 0, professionalism: 0, reliability: 0 });
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
-
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!token) return;
-    try {
-      setRating(await rate({ token, truckId, ...scores }));
-      setMessage({ ok: true, text: t.truck.rateThanks });
-    } catch (error) {
-      setMessage({ ok: false, text: errorMessage(error, t) });
-    }
-  };
 
   return <section className="mt-10 border-t border-line pt-8" aria-labelledby="ratings-title">
     <h2 id="ratings-title" className="text-lg font-semibold">{t.truck.rating}</h2>
@@ -180,24 +163,7 @@ function Ratings({ truckId, rating: initial }: { truckId: Id<"trucks">; rating: 
       : <p className="mt-2 text-muted">{t.truck.noRating}</p>}
 
     {session?.role === "producer"
-      ? <form onSubmit={submit} className="mt-6 grid gap-4 rounded-2xl border border-line bg-white p-5">
-          <p className="font-semibold">{t.truck.rateTitle}</p>
-          {criteria.map((key) => (
-            <fieldset key={key} className="flex flex-wrap items-center justify-between gap-2">
-              <legend className="text-sm text-muted">{t.truck.criteria[key]}</legend>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <button key={value} type="button" onClick={() => setScores({ ...scores, [key]: value })} aria-pressed={scores[key] === value} aria-label={`${t.truck.criteria[key]} ${value}/5`}
-                    className="grid size-10 place-items-center rounded-lg hover:bg-harvest-100">
-                    <Star className={cn("size-6", value <= scores[key] ? "fill-harvest-400 text-harvest-400" : "text-line")} aria-hidden="true" />
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-          ))}
-          {message && <FormMessage tone={message.ok ? "success" : "error"}>{message.text}</FormMessage>}
-          <Button type="submit" disabled={criteria.some((key) => !scores[key])}>{t.truck.rateSubmit}</Button>
-        </form>
+      ? <RatingForm truckId={truckId} title={t.truck.rateTitle} onRated={setRating} />
       : !session && <p className="mt-4 text-sm text-muted"><Link to="/$lang/login" params={{ lang }} className="font-semibold text-brand-700 hover:underline">{t.nav.login}</Link> — {t.truck.rateLogin}</p>}
   </section>;
 }

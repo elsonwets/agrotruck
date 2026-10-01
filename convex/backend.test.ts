@@ -88,17 +88,44 @@ describe("trucks", () => {
     expect((await t.query(api.users.me, { token })).vehicleCategories).toEqual(["camion"]);
   });
 
-  it("averages ratings from producers, one per producer", async () => {
+  it("lets only a producer transported by the transporter rate the truck, after delivery", async () => {
     const t = convexTest(schema, modules);
-    const transporter = await signup(t, "transporter", "+245955000601");
+    const transporter = await signup(t, "transporter", "+245955000601", { vehicleCategories: ["camionnette"], workZones: ["bissau"] });
     const truckId = await t.mutation(api.trucks.create, {
-      token: transporter, name: "Canter", category: "camionnette", listingMode: "rental", capacityTons: 3, zone: "bissau", location: "Bissau",
-      serviceZones: [], goods: [], availability: "available", description: "", photoIds: [],
+      token: transporter, name: "Canter", category: "camionnette", listingMode: "transport", capacityTons: 3, zone: "bissau", location: "Bissau",
+      serviceZones: ["bissau"], goods: [], availability: "available", description: "", photoIds: [],
     });
     const producer = await signup(t, "producer", "+245955000602");
-    await t.mutation(api.trucks.rate, { token: producer, truckId, vehicleQuality: 5, professionalism: 3, reliability: 4 });
+    const stranger = await signup(t, "producer", "+245955000603");
+    const scores = { truckId, vehicleQuality: 5, professionalism: 3, reliability: 4 };
+    await expect(t.mutation(api.trucks.rate, { token: producer, ...scores })).rejects.toThrow("not_transported");
+
+    const missionId = await t.mutation(api.missions.create, {
+      token: producer, vehicleCategory: "camionnette", pickupZone: "bissau", pickupLocation: "Bandim", pickupGps: { lat: 11.86, lng: -15.6 },
+      dropoffZone: "bissau", dropoffLocation: "Porto", productType: "cashew", quantitySacks: 20, neededFrom: "2026-10-10",
+    });
+    const offerId = await t.mutation(api.offers.send, { token: transporter, missionId, price: 25000, truckId });
+    await t.mutation(api.offers.choose, { token: producer, offerId });
+    await expect(t.mutation(api.trucks.rate, { token: producer, ...scores })).rejects.toThrow("not_transported");
+    expect(await t.query(api.trucks.myReview, { token: producer, truckId })).toEqual({ allowed: false, review: null });
+
+    await t.mutation(api.missions.act, { token: transporter, missionId, action: "loaded" });
+    await t.mutation(api.missions.act, { token: transporter, missionId, action: "delivered" });
+    await t.mutation(api.trucks.rate, { token: producer, ...scores });
     const summary = await t.mutation(api.trucks.rate, { token: producer, truckId, vehicleQuality: 4, professionalism: 4, reliability: 4 });
     expect(summary).toEqual({ count: 1, vehicleQuality: 4, professionalism: 4, reliability: 4, overall: 4 });
-    await expect(t.mutation(api.trucks.rate, { token: transporter, truckId, vehicleQuality: 5, professionalism: 5, reliability: 5 })).rejects.toThrow();
+    expect(await t.query(api.trucks.myReview, { token: producer, truckId })).toEqual({ allowed: true, review: { vehicleQuality: 4, professionalism: 4, reliability: 4 } });
+    await expect(t.mutation(api.trucks.rate, { token: stranger, ...scores })).rejects.toThrow("not_transported");
+    await expect(t.mutation(api.trucks.rate, { token: transporter, ...scores })).rejects.toThrow();
+  });
+
+  it("adds the Bissau dialling code to local numbers", async () => {
+    const t = convexTest(schema, modules);
+    await signup(t, "producer", "955 000 610");
+    expect(await t.mutation(api.auth.login, { phone: "+245 955 000 610", pin: "1234" })).toMatchObject({ ok: true });
+    const login = await t.mutation(api.auth.login, { phone: "955000610", pin: "1234" });
+    if (!login.ok) throw new Error(login.error);
+    expect((await t.query(api.users.me, { token: login.token })).phone).toBe("+245955000610");
+    expect(await t.mutation(api.auth.signup, { role: "transporter", phone: "00245955000610", pin: "1234" })).toEqual({ ok: false, error: "phone_taken" });
   });
 });

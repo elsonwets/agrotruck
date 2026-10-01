@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
 import { SITE_URL } from "~/lib/seo";
-import { LANGS } from "~/shared/domain";
+import { DEFAULT_LANG, LANGS } from "~/shared/domain";
 
 const PUBLIC_PATHS = ["", "/rental", "/sale", "/how-it-works", "/pricing", "/about", "/signup"];
 
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           "<url>",
           `<loc>${escape(`${SITE_URL}/${lang}${path}`)}</loc>`,
           ...LANGS.map((other) => `<xhtml:link rel="alternate" hreflang="${other}" href="${escape(`${SITE_URL}/${other}${path}`)}"/>`),
-          `<xhtml:link rel="alternate" hreflang="x-default" href="${escape(`${SITE_URL}/pt${path}`)}"/>`,
+          `<xhtml:link rel="alternate" hreflang="x-default" href="${escape(`${SITE_URL}/${DEFAULT_LANG}${path}`)}"/>`,
           lastmod ? `<lastmod>${lastmod}</lastmod>` : "",
           `<priority>${priority}</priority>`,
           "</url>",

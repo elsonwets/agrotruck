@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import { normalizePhone, PIN_PATTERN } from "../src/shared/domain";
+import { formatPhone, isValidPhone, normalizePhone, PIN_PATTERN } from "../src/shared/domain";
 import { clearAttempts, isLocked, LOGIN_LIMIT, recordAttempt, SIGNUP_LIMIT } from "./lib/attempts";
 import { hashPassword, newSessionToken, sha256, verifyPassword } from "./lib/security";
 import { getSessionUser, SESSION_DAYS } from "./lib/session";
@@ -16,7 +16,6 @@ type AuthResult =
   | { ok: false; error: "invalid_phone" | "invalid_pin" | "phone_taken" | "invalid_credentials" | "locked" | "disabled" | "rate_limited" };
 
 const DAY = 24 * 60 * 60 * 1000;
-const validPhone = (phone: string) => /^\+?[\d\s-]{7,20}$/.test(phone.trim());
 
 async function openSession(ctx: MutationCtx, userId: Id<"users">, now: number): Promise<string> {
   const token = newSessionToken();
@@ -44,11 +43,11 @@ export const signup = mutation({
   handler: async (ctx, args): Promise<AuthResult> => {
     const now = Date.now();
     if (await isLocked(ctx, "signup", now)) return { ok: false, error: "rate_limited" };
-    if (!validPhone(args.phone)) return { ok: false, error: "invalid_phone" };
+    if (!isValidPhone(args.phone)) return { ok: false, error: "invalid_phone" };
     if (!PIN_PATTERN.test(args.pin)) return { ok: false, error: "invalid_pin" };
     if (await phoneTaken(ctx, args.phone)) return { ok: false, error: "phone_taken" };
     await recordAttempt(ctx, "signup", SIGNUP_LIMIT, now);
-    const phone = args.phone.trim();
+    const phone = formatPhone(args.phone);
     const displayName = args.displayName?.trim().slice(0, 80) || phone;
     const userId = await ctx.db.insert("users", {
       phone,

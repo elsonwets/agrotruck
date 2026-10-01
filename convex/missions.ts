@@ -4,7 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import { matchesTransporter, transition } from "../src/shared/missions";
 import { canSee, declinePendingOffers, profileOf, truckCategories, view } from "./lib/missionView";
 import { requireUser } from "./lib/session";
-import { vCategoryOrAny, vProductType, vZone } from "./lib/validators";
+import { vCategoryOrAny, vGps, vProductType, vZone } from "./lib/validators";
 
 // Missions de transport : le producteur publie, les transporteurs font des offres (offers.ts), le producteur en
 // retient une, puis chargement et livraison. Chaque mutation Convex est une transaction sérialisable.
@@ -16,6 +16,7 @@ export const create = mutation({
     vehicleCategory: vCategoryOrAny,
     pickupZone: vZone,
     pickupLocation: v.string(),
+    pickupGps: v.optional(vGps),
     dropoffZone: vZone,
     dropoffLocation: v.string(),
     productType: vProductType,
@@ -41,6 +42,8 @@ export const create = mutation({
     const quantitySacks = input.quantitySacks && input.quantitySacks > 0 ? Math.round(input.quantitySacks) : undefined;
     const quantityKg = input.quantityKg && input.quantityKg > 0 ? input.quantityKg : undefined;
     if (!quantitySacks && !quantityKg) throw new ConvexError({ code: "quantity_required" });
+    const { lat, lng } = input.pickupGps ?? { lat: 0, lng: 0 };
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new ConvexError({ code: "invalid_location" });
     const now = Date.now();
     return ctx.db.insert("missions", {
       ...input,

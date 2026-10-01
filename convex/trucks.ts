@@ -1,6 +1,7 @@
 import { ConvexError, v, type ObjectType } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
+import { formatPhone } from "../src/shared/domain";
 import { requireUser } from "./lib/session";
 import { vAvailability, vCategory, vListingMode, vZone } from "./lib/validators";
 
@@ -40,11 +41,11 @@ function clean(input: ObjectType<typeof truckFields>) {
     serviceZones: [...new Set(input.serviceZones)],
     goods: input.goods.map((good) => good.trim().slice(0, 40)).filter(Boolean).slice(0, 12),
     description: input.description.trim().slice(0, 1500),
-    whatsapp: input.whatsapp?.trim().slice(0, 25) || undefined,
+    whatsapp: input.whatsapp?.trim() ? formatPhone(input.whatsapp).slice(0, 25) : undefined,
   };
 }
 
-function slugify(name: string): string {
+export function slugify(name: string): string {
   const base = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 50) || "vehicule";
   const suffix = new Uint8Array(3);
   crypto.getRandomValues(suffix);
@@ -149,7 +150,7 @@ export const mine = query({
 export const generateUploadUrl = mutation({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
-    await requireUser(ctx, token, ["transporter"]);
+    await requireUser(ctx, token, ["transporter", "admin"]);
     return ctx.storage.generateUploadUrl();
   },
 });
@@ -231,6 +232,28 @@ export const setHidden = mutation({
   },
 });
 
+// Un producteur ne note que le transporteur qui l'a transporté, une fois la marchandise livrée
+// (avec ce camion, ou sans camion précisé dans l'offre).
+async function transportedBy(ctx: QueryCtx, producerId: Id<"users">, truck: Doc<"trucks">) {
+  const missions = await ctx.db.query("missions").withIndex("by_producerId", (q) => q.eq("producerId", producerId)).order("desc").take(500);
+  return missions.some((mission) => mission.status === "delivered" && mission.transporterId === truck.ownerId && (!mission.truckId || mission.truckId === truck._id));
+}
+
+// Le producteur connecté peut-il noter ce camion, et quelle note a-t-il déjà donnée ?
+export const myReview = query({
+  args: { token: v.string(), truckId: v.id("trucks") },
+  handler: async (ctx, { token, truckId }) => {
+    const user = await requireUser(ctx, token);
+    const truck = await ctx.db.get("trucks", truckId);
+    if (user.role !== "producer" || !truck || truck.hidden) return { allowed: false, review: null };
+    const review = await ctx.db.query("reviews").withIndex("by_truckId_and_userId", (q) => q.eq("truckId", truckId).eq("userId", user._id)).unique();
+    return {
+      allowed: await transportedBy(ctx, user._id, truck),
+      review: review ? { vehicleQuality: review.vehicleQuality, professionalism: review.professionalism, reliability: review.reliability } : null,
+    };
+  },
+});
+
 export const rate = mutation({
   args: {
     token: v.string(),
@@ -244,6 +267,7 @@ export const rate = mutation({
     if (Object.values(scores).some((score) => !Number.isInteger(score) || score < 1 || score > 5)) throw new ConvexError({ code: "invalid_rating" });
     const truck = await ctx.db.get("trucks", truckId);
     if (!truck || truck.hidden) throw new ConvexError({ code: "not_found" });
+    if (!(await transportedBy(ctx, user._id, truck))) throw new ConvexError({ code: "not_transported" });
     const previous = await ctx.db.query("reviews").withIndex("by_truckId_and_userId", (q) => q.eq("truckId", truckId).eq("userId", user._id)).unique();
     const totals = truck.ratings ?? { count: 0, vehicleQuality: 0, professionalism: 0, reliability: 0 };
     const next = {

@@ -10,13 +10,13 @@ import { Button } from "~/components/ui/button";
 import { Card, PageTitle } from "~/components/ui/card";
 import { Field, FormMessage, Input, Select, Textarea } from "~/components/ui/form";
 import { dictFor } from "~/i18n";
-import { cn } from "~/lib/cn";
+import { cn, mapUrl } from "~/lib/cn";
 import { useLang, useT } from "~/lib/i18n";
 import { getOutbox } from "~/lib/outbox-client";
 import { privateHead } from "~/lib/private-route";
 import { useToken } from "~/lib/session";
 import { PRODUCT_TYPES, VEHICLE_CATEGORIES, type Lang, type ProductType, type VehicleCategory } from "~/shared/domain";
-import { zones, type Zone } from "~/shared/zones";
+import { nearestZone, zones, type Zone } from "~/shared/zones";
 
 export const Route = createFileRoute("/$lang/producer/new")({
   validateSearch: (search: Record<string, unknown>): { category?: VehicleCategory } => ({
@@ -40,24 +40,41 @@ function NewRequest() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsNote, setGpsNote] = useState<{ ok: boolean; text: string } | null>(null);
   const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => { setTouched(true); setForm({ ...form, [key]: event.target.value }); };
 
   // Lieu de chargement pré-rempli avec la région et le village du profil (tant que l'utilisateur n'a rien saisi).
   const pickupZone = form.pickupZone || (!touched && me?.mainZone) || "";
   const pickupLocation = form.pickupLocation || (!touched && me?.mainLocation) || "";
 
+  // Position du téléphone : enregistrée avec la demande (lien carte pour le transporteur) et région devinée si vide.
+  // La géolocalisation n'existe que sur une page sécurisée (https ou localhost).
   const locate = () => {
+    setGpsNote(null);
+    if (!window.isSecureContext || !("geolocation" in navigator)) { setGpsNote({ ok: false, text: t.producer.gpsError }); return; }
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const gps = `GPS ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;
-        setTouched(true);
-        setForm((current) => ({ ...current, pickupZone: current.pickupZone || pickupZone, pickupLocation: pickupLocation ? `${pickupLocation} (${gps})` : gps }));
-        setLocating(false);
-      },
-      () => { setError(t.producer.gpsError); setLocating(false); },
-      { enableHighAccuracy: true, timeout: 15_000 },
-    );
+    const found = ({ coords }: GeolocationPosition) => {
+      const position = { lat: Number(coords.latitude.toFixed(5)), lng: Number(coords.longitude.toFixed(5)) };
+      setTouched(true);
+      setGps(position);
+      setForm((current) => ({
+        ...current,
+        pickupZone: current.pickupZone || pickupZone || nearestZone(position.lat, position.lng),
+        pickupLocation: current.pickupLocation || pickupLocation || `GPS ${position.lat}, ${position.lng}`,
+      }));
+      setGpsNote({ ok: true, text: t.producer.gpsFound });
+      setLocating(false);
+    };
+    const failed = (reason: GeolocationPositionError) => {
+      setGpsNote({ ok: false, text: reason.code === reason.PERMISSION_DENIED ? t.producer.gpsDenied : t.producer.gpsError });
+      setLocating(false);
+    };
+    // GPS précis d'abord ; sans signal (à l'intérieur), position approximative par le réseau.
+    navigator.geolocation.getCurrentPosition(found, (reason) => {
+      if (reason.code === reason.PERMISSION_DENIED) failed(reason);
+      else navigator.geolocation.getCurrentPosition(found, failed, { enableHighAccuracy: false, timeout: 20_000, maximumAge: 10 * 60_000 });
+    }, { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 });
   };
 
   const submit = async (event: React.FormEvent) => {
@@ -73,7 +90,7 @@ function NewRequest() {
       kind: "create",
       label: `${pickupLocation} → ${form.dropoffLocation}`,
       args: {
-        token, clientRequestId, vehicleCategory: category, pickupZone: pickupZone as Zone, pickupLocation,
+        token, clientRequestId, vehicleCategory: category, pickupZone: pickupZone as Zone, pickupLocation, pickupGps: gps ?? undefined,
         dropoffZone: form.dropoffZone as Zone, dropoffLocation: form.dropoffLocation, productType: form.productType as ProductType,
         quantitySacks: form.quantitySacks ? Number(form.quantitySacks) : undefined, quantityKg: form.quantityKg ? Number(form.quantityKg) : undefined,
         neededFrom: form.neededFrom, comment: form.comment,
@@ -104,9 +121,11 @@ function NewRequest() {
             {zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.label}</option>)}
           </Select>
           <Input aria-label={t.producer.pickup} placeholder={t.producer.pickupPlaceholder} value={pickupLocation} onChange={set("pickupLocation")} required />
-          {typeof navigator !== "undefined" && "geolocation" in navigator && (
-            <Button variant="secondary" size="sm" onClick={locate} disabled={locating} className="sm:col-span-2 sm:justify-self-start"><LocateFixed aria-hidden="true" />{locating ? t.producer.locating : t.producer.myLocation}</Button>
-          )}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:col-span-2">
+            <Button variant="secondary" size="sm" onClick={locate} disabled={locating}><LocateFixed aria-hidden="true" />{locating ? t.producer.locating : t.producer.myLocation}</Button>
+            {gps && <a href={mapUrl(gps)} target="_blank" rel="noreferrer" className="text-sm font-semibold text-brand-700 hover:underline">{t.producer.viewOnMap} ({gps.lat}, {gps.lng})</a>}
+          </div>
+          {gpsNote && <div className="sm:col-span-2"><FormMessage tone={gpsNote.ok ? "success" : "error"}>{gpsNote.text}</FormMessage></div>}
         </fieldset>
         <fieldset className="grid gap-3 sm:grid-cols-2">
           <legend className="mb-2 text-sm font-semibold">{t.producer.dropoff}</legend>

@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { normalizePhone, PIN_PATTERN } from "../src/shared/domain";
+import { formatPhone, isValidPhone, normalizePhone, PIN_PATTERN } from "../src/shared/domain";
 import { hashPassword } from "./lib/security";
 import { publicUser, requireUser } from "./lib/session";
 import { vCategory, vLang, vRole, vZone } from "./lib/validators";
@@ -35,10 +35,10 @@ export const updateProfile = mutation({
       patch.displayName = name;
     }
     if (input.phone !== undefined && normalizePhone(input.phone) !== user.phoneKey) {
-      if (!/^\+?[\d\s-]{7,20}$/.test(input.phone.trim())) throw new ConvexError({ code: "invalid_phone" });
+      if (!isValidPhone(input.phone)) throw new ConvexError({ code: "invalid_phone" });
       const taken = await ctx.db.query("users").withIndex("by_phoneKey", (q) => q.eq("phoneKey", normalizePhone(input.phone!))).unique();
       if (taken) throw new ConvexError({ code: "phone_taken" });
-      patch.phone = input.phone.trim();
+      patch.phone = formatPhone(input.phone);
       patch.phoneKey = normalizePhone(input.phone);
     }
     if (input.companyName !== undefined) patch.companyName = text(input.companyName, 80) || undefined;
@@ -109,7 +109,7 @@ export const bootstrapAdmin = internalMutation({
       throw new ConvexError({ code: "phone_taken" });
     }
     return ctx.db.insert("users", {
-      phone: phone.trim(), phoneKey: normalizePhone(phone), passwordHash: await hashPassword(pin), role: "admin", displayName: displayName.trim(),
+      phone: formatPhone(phone), phoneKey: normalizePhone(phone), passwordHash: await hashPassword(pin), role: "admin", displayName: displayName.trim(),
     });
   },
 });

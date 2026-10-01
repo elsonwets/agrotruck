@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
 import { Camera, X } from "lucide-react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
-import { Chips, Field, FormMessage, Input, Select, Textarea } from "~/components/ui/form";
+import { Chips, Field, FormMessage, Input, PhoneInput, Select, Textarea } from "~/components/ui/form";
 import { CategoryPicker } from "./category-picker";
 import { errorMessage } from "~/lib/errors";
+import { shrinkImage } from "~/lib/image";
 import { useT } from "~/lib/i18n";
 import { useToken } from "~/lib/session";
-import { AVAILABILITIES, LISTING_MODES, type Availability, type ListingMode, type VehicleCategory } from "~/shared/domain";
+import { AVAILABILITIES, LISTING_MODES, localPhone, type Availability, type ListingMode, type VehicleCategory } from "~/shared/domain";
 import { zones, type Zone } from "~/shared/zones";
 
 export type OwnedTruck = FunctionReturnType<typeof api.trucks.mine>[number];
@@ -29,28 +31,33 @@ export function TruckForm({ truck, onSaved }: { truck?: OwnedTruck; onSaved: () 
     name: truck?.name ?? "", brand: truck?.brand ?? "", model: truck?.model ?? "",
     listingMode: truck?.listingMode ?? "transport", availability: truck?.availability ?? "available",
     capacityTons: truck ? String(truck.capacityTons) : "", zone: truck?.zone ?? "", location: truck?.location ?? "",
-    goods: truck?.goods.join(", ") ?? "", description: truck?.description ?? "", whatsapp: truck?.whatsapp ?? "",
+    goods: truck?.goods.join(", ") ?? "", description: truck?.description ?? "", whatsapp: truck?.whatsapp ? localPhone(truck.whatsapp) : "",
   });
   const [category, setCategory] = useState<VehicleCategory | undefined>(truck?.category);
   const [serviceZones, setServiceZones] = useState<Zone[]>(truck?.serviceZones ?? []);
   const [photos, setPhotos] = useState<Photo[]>(truck ? truck.photoIds.map((id, index) => ({ id, url: truck.photoUrls[index] ?? "" })) : []);
   const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setForm({ ...form, [key]: event.target.value });
 
-  const addPhotos = async (files: FileList | null) => {
-    if (!files?.length) return;
+  const addPhotos = async (input: HTMLInputElement) => {
+    const files = [...(input.files ?? [])].slice(0, MAX_PHOTOS - photos.length);
+    input.value = ""; // la même photo pourra être choisie à nouveau
+    if (!files.length) return;
     setUploading(true);
-    setError(null);
+    setPhotoError(null);
     try {
-      for (const file of [...files].slice(0, MAX_PHOTOS - photos.length)) {
-        const response = await fetch(await uploadUrl({ token }), { method: "POST", headers: { "Content-Type": file.type }, body: file });
+      for (const file of files) {
+        const body = await shrinkImage(file);
+        const response = await fetch(await uploadUrl({ token }), { method: "POST", headers: { "Content-Type": body.type || "image/jpeg" }, body });
+        if (!response.ok) throw new Error(`upload ${response.status}`);
         const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
-        setPhotos((current) => [...current, { id: storageId, url: URL.createObjectURL(file) }]);
+        setPhotos((current) => [...current, { id: storageId, url: URL.createObjectURL(body) }]);
       }
     } catch (reason) {
-      setError(errorMessage(reason, t));
+      setPhotoError(reason instanceof ConvexError ? errorMessage(reason, t) : t.errors.upload_failed);
     } finally {
       setUploading(false);
     }
@@ -113,7 +120,7 @@ export function TruckForm({ truck, onSaved }: { truck?: OwnedTruck; onSaved: () 
         onToggle={(zone) => setServiceZones(serviceZones.includes(zone) ? serviceZones.filter((item) => item !== zone) : [...serviceZones, zone])} />
       <Field id="truck-goods" label={t.transporter.goods}><Input id="truck-goods" value={form.goods} onChange={set("goods")} /></Field>
       <Field id="truck-description" label={t.transporter.description}><Textarea id="truck-description" rows={4} value={form.description} onChange={set("description")} /></Field>
-      <Field id="truck-whatsapp" label={`${t.transporter.whatsapp} (${t.common.optional})`}><Input id="truck-whatsapp" type="tel" inputMode="tel" value={form.whatsapp} onChange={set("whatsapp")} /></Field>
+      <Field id="truck-whatsapp" label={`${t.transporter.whatsapp} (${t.common.optional})`}><PhoneInput id="truck-whatsapp" value={form.whatsapp} onChange={set("whatsapp")} /></Field>
     </Card>
 
     <Card className="p-5 sm:p-6">
@@ -128,9 +135,10 @@ export function TruckForm({ truck, onSaved }: { truck?: OwnedTruck; onSaved: () 
         ))}
         {photos.length < MAX_PHOTOS && <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border border-dashed border-brand-200 bg-white text-center text-xs font-semibold text-brand-700 hover:bg-brand-50">
           <span className="grid place-items-center gap-1 p-2"><Camera className="size-6" aria-hidden="true" />{uploading ? t.transporter.uploading : t.transporter.addPhotos}</span>
-          <input type="file" accept="image/*" multiple className="sr-only" disabled={uploading} onChange={(event) => void addPhotos(event.target.files)} />
+          <input type="file" accept="image/*" multiple className="sr-only" disabled={uploading} onChange={(event) => void addPhotos(event.target)} />
         </label>}
       </div>
+      {photoError && <div className="mt-3"><FormMessage>{photoError}</FormMessage></div>}
     </Card>
 
     {error && <FormMessage>{error}</FormMessage>}

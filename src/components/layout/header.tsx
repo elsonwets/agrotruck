@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, LogOut, Menu, UserRound, X } from "lucide-react";
+import { LayoutDashboard, Menu, X } from "lucide-react";
 import { buttonClass } from "~/components/ui/button";
 import { useLang, useT } from "~/lib/i18n";
 import { homePath, useSession } from "~/lib/session";
-import { AccountMenu, Avatar } from "./account-menu";
+import { AccountMenu } from "./account-menu";
 import { Brand } from "./brand";
 import { LanguageSwitcher } from "./language-switcher";
 
@@ -20,7 +20,7 @@ const navLinks = [
 export function Header() {
   const lang = useLang();
   const t = useT();
-  const { status, session, signOut } = useSession();
+  const { status, session } = useSession();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   const navClass = "rounded-lg px-3 py-2 text-[15px] font-medium text-muted hover:bg-brand-50 hover:text-ink";
@@ -52,7 +52,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-2 lg:hidden">
-        {session && <Link to={homePath[session.role]} params={{ lang }} aria-label={t.nav.mySpace}><Avatar name={session.displayName} size="lg" /></Link>}
+        {session && <AccountMenu compact />}
         <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
           className="grid size-11 place-items-center rounded-xl border border-line bg-white text-ink">
           {open ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
@@ -69,15 +69,7 @@ export function Header() {
         ))}
         <div className="mt-3 border-t border-line pt-4"><LanguageSwitcher align="left" /></div>
         <div className="mt-3 grid gap-2">
-          {session && <>
-            <div className="flex items-center gap-3 rounded-xl bg-canvas p-3">
-              <Avatar name={session.displayName} size="lg" />
-              <div className="min-w-0"><p className="truncate font-semibold">{session.displayName}</p><p className="text-xs text-muted">{t.roles[session.role]}</p></div>
-            </div>
-            <Link to={homePath[session.role]} params={{ lang }} onClick={close} className={buttonClass("primary", "lg")}><LayoutDashboard aria-hidden="true" />{t.nav.mySpace}</Link>
-            <Link to="/$lang/profile" params={{ lang }} onClick={close} className={buttonClass("secondary", "lg")}><UserRound aria-hidden="true" />{t.nav.profile}</Link>
-            <button type="button" onClick={() => { close(); void signOut(lang); }} className={buttonClass("ghost", "lg", "text-[#a3201b] hover:bg-flag-50")}><LogOut aria-hidden="true" />{t.nav.logout}</button>
-          </>}
+          {session && <Link to={homePath[session.role]} params={{ lang }} onClick={close} className={buttonClass("primary", "lg")}><LayoutDashboard aria-hidden="true" />{t.nav.mySpace}</Link>}
           {status === "unauthenticated" && <>
             <Link to="/$lang/signup" params={{ lang }} onClick={close} className={buttonClass("primary", "lg")}>{t.nav.signup}</Link>
             <Link to="/$lang/login" params={{ lang }} onClick={close} className={buttonClass("secondary", "lg")}>{t.nav.login}</Link>

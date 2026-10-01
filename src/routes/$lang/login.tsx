@@ -5,7 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import { GuestOnly } from "~/components/session-gate";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
-import { Field, FormMessage, Input } from "~/components/ui/form";
+import { Field, FormMessage, Input, PhoneInput } from "~/components/ui/form";
 import { dictFor } from "~/i18n";
 import { useLang, useT } from "~/lib/i18n";
 import { seo } from "~/lib/seo";
@@ -52,7 +52,7 @@ function LoginPage() {
       <p className="mt-1 text-muted">{t.auth.loginIntro}</p>
       <form onSubmit={submit} className="mt-6 grid gap-4">
         <Field id="login-phone" label={t.auth.phone}>
-          <Input id="login-phone" type="tel" inputMode="tel" autoComplete="username" placeholder={t.auth.phonePlaceholder} value={phone} onChange={(event) => setPhone(event.target.value)} required />
+          <PhoneInput id="login-phone" autoComplete="username" placeholder={t.auth.phonePlaceholder} value={phone} onChange={(event) => setPhone(event.target.value)} required />
         </Field>
         <Field id="login-pin" label={t.auth.pin}>
           <Input id="login-pin" type="password" inputMode="numeric" autoComplete="current-password" value={pin} onChange={(event) => setPin(event.target.value)} required />

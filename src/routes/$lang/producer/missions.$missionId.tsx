@@ -9,6 +9,7 @@ import { SessionGate } from "~/components/session-gate";
 import { Button } from "~/components/ui/button";
 import { Card, EmptyState, PageTitle } from "~/components/ui/card";
 import { OffersPanel, TruckLine } from "~/components/missions/offers";
+import { RatingForm } from "~/components/trucks/rating-form";
 import { FormMessage } from "~/components/ui/form";
 import { useCachedQuery } from "~/lib/cached-query";
 import { errorMessage } from "~/lib/errors";
@@ -80,7 +81,12 @@ function ProducerMission() {
         : <>
             <ContactCard title={t.producer.transporter} contact={mission.transporter}
               empty={mission.status === "cancelled" ? t.missionStatus.cancelled : t.producer.waitingTransporter} />
-            {mission.truck && <Card className="p-5"><p className="mb-3 font-semibold text-muted">{t.offers.truck}</p><TruckLine truck={mission.truck} /></Card>}
+            {mission.truck && <Card className="p-5">
+              <p className="mb-3 font-semibold text-muted">{t.offers.truck}</p>
+              <TruckLine truck={mission.truck} />
+              {/* Fin du trajet : le producteur note le transport (une seule note par camion, modifiable). */}
+              {mission.status === "delivered" && !mission.truck.hidden && <RatingForm truckId={mission.truck._id} title={t.truck.rateTransportTitle} />}
+            </Card>}
           </>}
     </div>
 

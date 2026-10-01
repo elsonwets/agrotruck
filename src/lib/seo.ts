@@ -1,4 +1,4 @@
-import { LANGS, type Lang } from "~/shared/domain";
+import { DEFAULT_LANG, LANGS, type Lang } from "~/shared/domain";
 import { dictFor } from "~/i18n";
 
 // URL publique du site (Vercel : VITE_SITE_URL à définir sur le domaine final).
@@ -44,7 +44,7 @@ export function seo({ lang, path, title, description, image = OG_IMAGE, noindex,
     links: noindex ? [] : [
       { rel: "canonical", href: url },
       ...LANGS.map((other) => ({ rel: "alternate", hrefLang: other, href: `${SITE_URL}/${other}${path}` })),
-      { rel: "alternate", hrefLang: "x-default", href: `${SITE_URL}/pt${path}` },
+      { rel: "alternate", hrefLang: "x-default", href: `${SITE_URL}/${DEFAULT_LANG}${path}` },
     ],
     scripts: jsonLd.map((data) => ({ type: "application/ld+json", children: JSON.stringify(data) })),
   };

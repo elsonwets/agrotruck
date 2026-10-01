@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { MessageCircle, Phone } from "lucide-react";
+import { MapPin, MessageCircle, Phone } from "lucide-react";
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "../../../convex/_generated/api";
 import { buttonClass } from "~/components/ui/button";
 import { Badge, Card } from "~/components/ui/card";
 import { VehicleIcon } from "~/components/vehicle-icon";
 import type { Dict } from "~/i18n";
-import { telUrl, whatsappUrl } from "~/lib/cn";
+import { mapUrl, telUrl, whatsappUrl } from "~/lib/cn";
 import { useT } from "~/lib/i18n";
 import type { MissionStatus } from "~/shared/domain";
 import { zoneLabels } from "~/shared/zones";
@@ -86,6 +86,9 @@ export function MissionFacts({ mission }: { mission: MissionView }) {
     <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
       {facts.map(([label, value]) => <div key={label}><dt className="text-xs text-muted">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>)}
     </dl>
+    {mission.pickupGps && <a href={mapUrl(mission.pickupGps)} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
+      <MapPin className="size-4" aria-hidden="true" />{t.producer.viewOnMap} — {t.producer.pickup}
+    </a>}
     {mission.comment && <p className="mt-4 border-t border-line pt-4 text-sm"><span className="text-muted">{t.producer.comment} : </span>{mission.comment}</p>}
   </Card>;
 }

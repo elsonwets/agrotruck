@@ -5,13 +5,13 @@ import { api } from "../../../convex/_generated/api";
 import { SessionGate } from "~/components/session-gate";
 import { Button } from "~/components/ui/button";
 import { Card, PageTitle } from "~/components/ui/card";
-import { Chips, Field, FormMessage, Input, Select } from "~/components/ui/form";
+import { Chips, Field, FormMessage, Input, PhoneInput, Select } from "~/components/ui/form";
 import { dictFor } from "~/i18n";
 import { errorMessage } from "~/lib/errors";
 import { useT } from "~/lib/i18n";
 import { privateHead } from "~/lib/private-route";
 import { useToken } from "~/lib/session";
-import { LANGS, VEHICLE_CATEGORIES, type Lang, type VehicleCategory } from "~/shared/domain";
+import { LANGS, VEHICLE_CATEGORIES, localPhone, type Lang, type VehicleCategory } from "~/shared/domain";
 import { zones, type Zone } from "~/shared/zones";
 
 export const Route = createFileRoute("/$lang/profile")({
@@ -34,7 +34,7 @@ function ProfileForm({ me }: { me: Me }) {
   const token = useToken();
   const update = useMutation(api.users.updateProfile);
   const [form, setForm] = useState({
-    displayName: me.displayName, phone: me.phone, companyName: me.companyName ?? "", lang: me.lang ?? "",
+    displayName: me.displayName, phone: localPhone(me.phone), companyName: me.companyName ?? "", lang: me.lang ?? "",
     capacityTons: me.capacityTons?.toString() ?? "", mainZone: me.mainZone ?? "", mainLocation: me.mainLocation ?? "",
   });
   const [categories, setCategories] = useState<VehicleCategory[]>(me.vehicleCategories);
@@ -69,7 +69,7 @@ function ProfileForm({ me }: { me: Me }) {
       <form onSubmit={submit} className="grid gap-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field id="profile-name" label={t.auth.name}><Input id="profile-name" value={form.displayName} onChange={set("displayName")} required /></Field>
-          <Field id="profile-phone" label={t.auth.phone}><Input id="profile-phone" type="tel" inputMode="tel" value={form.phone} onChange={set("phone")} required /></Field>
+          <Field id="profile-phone" label={t.auth.phone}><PhoneInput id="profile-phone" value={form.phone} onChange={set("phone")} required /></Field>
         </div>
         <Field id="profile-company" label={`${t.auth.company} (${t.common.optional})`}><Input id="profile-company" value={form.companyName} onChange={set("companyName")} /></Field>
 

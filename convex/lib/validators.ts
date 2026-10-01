@@ -20,6 +20,7 @@ export const vMissionStatus = literals(MISSION_STATUSES);
 export const vMissionEventType = literals(MISSION_EVENT_TYPES);
 export const vZone = literals(zones.map(({ id }) => id));
 export const vOfferStatus = literals(OFFER_STATUSES);
+export const vGps = v.object({ lat: v.number(), lng: v.number() });
 
 export const vMissionEvent = v.object({
   type: vMissionEventType,

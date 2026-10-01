@@ -6,7 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import { GuestOnly } from "~/components/session-gate";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
-import { Chips, Field, FormMessage, Input, Select } from "~/components/ui/form";
+import { Chips, Field, FormMessage, Input, PhoneInput, Select } from "~/components/ui/form";
 import { dictFor } from "~/i18n";
 import { cn } from "~/lib/cn";
 import { useLang, useT } from "~/lib/i18n";
@@ -90,7 +90,7 @@ function SignupPage() {
           <Field id="signup-name" label={`${t.auth.name} (${t.common.optional})`}><Input id="signup-name" autoComplete="name" value={form.displayName} onChange={set("displayName")} /></Field>
           <Field id="signup-company" label={`${t.auth.company} (${t.common.optional})`}><Input id="signup-company" autoComplete="organization" value={form.companyName} onChange={set("companyName")} /></Field>
         </div>
-        <Field id="signup-phone" label={t.auth.phone}><Input id="signup-phone" type="tel" inputMode="tel" autoComplete="username" placeholder={t.auth.phonePlaceholder} value={form.phone} onChange={set("phone")} required /></Field>
+        <Field id="signup-phone" label={t.auth.phone}><PhoneInput id="signup-phone" autoComplete="username" placeholder={t.auth.phonePlaceholder} value={form.phone} onChange={set("phone")} required /></Field>
         <div className="grid grid-cols-2 gap-4">
           <Field id="signup-pin" label={t.auth.pin}><Input id="signup-pin" type="password" inputMode="numeric" pattern="\d{4,6}" maxLength={6} autoComplete="new-password" value={form.pin} onChange={set("pin")} required /></Field>
           <Field id="signup-pin-confirm" label={t.auth.pinConfirm}><Input id="signup-pin-confirm" type="password" inputMode="numeric" pattern="\d{4,6}" maxLength={6} autoComplete="new-password" value={form.pinConfirm} onChange={set("pinConfirm")} required /></Field>
