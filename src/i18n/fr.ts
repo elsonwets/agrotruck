@@ -362,6 +362,7 @@ export const fr = {
     truckNamePlaceholder: "Ex. Mercedes Actros benne 20 t",
     brand: "Marque",
     model: "Modèle",
+    plate: "Plaque d'immatriculation",
     category: "Type de véhicule",
     listingMode: "Type d'offre",
     capacity: "Capacité (tonnes)",

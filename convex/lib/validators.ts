@@ -27,3 +27,5 @@ export const vMissionEvent = v.object({
   at: v.number(),
   comment: v.optional(v.string()),
 });
+
+export const vPositionSource = v.union(v.literal("owner"), v.literal("link"));

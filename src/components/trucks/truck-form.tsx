@@ -26,7 +26,7 @@ export function TruckForm({ truck, onSaved }: { truck?: OwnedTruck; onSaved: () 
   const update = useMutation(api.trucks.update);
   const uploadUrl = useMutation(api.trucks.generateUploadUrl);
   const [form, setForm] = useState({
-    name: truck?.name ?? "", brand: truck?.brand ?? "", model: truck?.model ?? "",
+    name: truck?.name ?? "", brand: truck?.brand ?? "", model: truck?.model ?? "", plate: truck?.plate ?? "",
     listingMode: truck?.listingMode ?? "transport", availability: truck?.availability ?? "available",
     capacityTons: truck ? String(truck.capacityTons) : "", zone: truck?.zone ?? "", location: truck?.location ?? "",
     goods: truck?.goods.join(", ") ?? "", description: truck?.description ?? "", whatsapp: truck?.whatsapp ?? "",
@@ -63,7 +63,7 @@ export function TruckForm({ truck, onSaved }: { truck?: OwnedTruck; onSaved: () 
     setError(null);
     const fields = {
       token, name: form.name, category, listingMode: form.listingMode as ListingMode, availability: form.availability as Availability,
-      brand: form.brand || undefined, model: form.model || undefined, capacityTons: Number(form.capacityTons || 0),
+      brand: form.brand || undefined, model: form.model || undefined, plate: form.plate || undefined, capacityTons: Number(form.capacityTons || 0),
       zone: form.zone as Zone, location: form.location, serviceZones,
       goods: form.goods.split(",").map((good) => good.trim()).filter(Boolean),
       description: form.description, whatsapp: form.whatsapp || undefined, photoIds: photos.map((photo) => photo.id),
@@ -84,9 +84,10 @@ export function TruckForm({ truck, onSaved }: { truck?: OwnedTruck; onSaved: () 
 
     <Card className="grid gap-5 p-5 sm:p-6">
       <Field id="truck-name" label={t.transporter.truckName}><Input id="truck-name" placeholder={t.transporter.truckNamePlaceholder} value={form.name} onChange={set("name")} required /></Field>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field id="truck-brand" label={`${t.transporter.brand} (${t.common.optional})`}><Input id="truck-brand" value={form.brand} onChange={set("brand")} /></Field>
         <Field id="truck-model" label={`${t.transporter.model} (${t.common.optional})`}><Input id="truck-model" value={form.model} onChange={set("model")} /></Field>
+        <Field id="truck-plate" label={`${t.transporter.plate} (${t.common.optional})`}><Input id="truck-plate" value={form.plate} onChange={set("plate")} autoCapitalize="characters" /></Field>
         <Field id="truck-capacity" label={t.transporter.capacity}><Input id="truck-capacity" type="number" min="0" max="100" step="0.5" value={form.capacityTons} onChange={set("capacityTons")} required /></Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">

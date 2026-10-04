@@ -362,6 +362,7 @@ export const en: Dict = {
     truckNamePlaceholder: "E.g. Mercedes Actros tipper 20 t",
     brand: "Make",
     model: "Model",
+    plate: "Licence plate",
     category: "Type of vehicle",
     listingMode: "Type of offer",
     capacity: "Capacity (tonnes)",

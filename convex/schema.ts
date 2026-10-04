@@ -1,7 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
-  vAvailability, vCategory, vCategoryOrAny, vLang, vListingMode, vMissionEvent, vMissionStatus, vOfferStatus, vProductType, vRole, vZone,
+  vAvailability, vCategory, vCategoryOrAny, vLang, vListingMode, vMissionEvent, vMissionStatus, vOfferStatus, vPositionSource, vProductType, vRole, vZone,
 } from "./lib/validators";
 
 export default defineSchema({
@@ -65,6 +65,8 @@ export default defineSchema({
     hidden: v.boolean(), // masqué par l'admin
     // Sommes des notes (dénormalisées : le catalogue n'a pas à relire tous les avis).
     ratings: v.optional(v.object({ count: v.number(), vehicleQuality: v.number(), professionalism: v.number(), reliability: v.number() })),
+    plate: v.optional(v.string()), // plaque d'immatriculation, en majuscules
+    driverId: v.optional(v.id("drivers")), // conducteur affecté (gardé en cohérence avec drivers.truckId)
     updatedAt: v.number(),
   })
     .index("by_slug", ["slug"])
@@ -96,7 +98,8 @@ export default defineSchema({
     .index("by_producerId", ["producerId"])
     .index("by_transporterId", ["transporterId"])
     .index("by_status", ["status"])
-    .index("by_clientRequestId", ["clientRequestId"]),
+    .index("by_clientRequestId", ["clientRequestId"])
+    .index("by_truckId_and_status", ["truckId", "status"]),
 
   // Offres des transporteurs sur une mission (une par transporteur et par mission, modifiable tant qu'elle attend).
   offers: defineTable({
@@ -123,4 +126,43 @@ export default defineSchema({
   })
     .index("by_truckId", ["truckId"])
     .index("by_truckId_and_userId", ["truckId", "userId"]),
+
+  // Conducteurs d'une entreprise (transporteur avec 2 véhicules ou plus) : pas de compte, ils partagent leur
+  // position par un lien de suivi (trackingLinks).
+  drivers: defineTable({
+    ownerId: v.id("users"),
+    name: v.string(),
+    phone: v.string(), // numéro WhatsApp, pour le lien wa.me
+    truckId: v.optional(v.id("trucks")),
+    disabled: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_ownerId", ["ownerId"]),
+
+  // Liens de suivi envoyés par WhatsApp : on ne garde que l'empreinte SHA-256 du jeton, comme pour les sessions.
+  trackingLinks: defineTable({
+    ownerId: v.id("users"),
+    driverId: v.id("drivers"),
+    truckId: v.id("trucks"),
+    missionId: v.optional(v.id("missions")),
+    tokenHash: v.string(),
+    expiresAt: v.number(),
+    revokedAt: v.optional(v.number()),
+  })
+    .index("by_tokenHash", ["tokenHash"])
+    .index("by_driverId", ["driverId"])
+    .index("by_truckId", ["truckId"])
+    .index("by_expiresAt", ["expiresAt"]),
+
+  // Dernière position connue de chaque camion : une ligne par camion, remplacée à chaque envoi (pas d'historique).
+  positions: defineTable({
+    truckId: v.id("trucks"),
+    lat: v.number(),
+    lng: v.number(),
+    accuracy: v.optional(v.number()), // mètres
+    speed: v.optional(v.number()), // m/s
+    heading: v.optional(v.number()), // degrés
+    at: v.number(), // heure du serveur à la réception
+    source: vPositionSource,
+    driverId: v.optional(v.id("drivers")),
+  }).index("by_truckId", ["truckId"]),
 });

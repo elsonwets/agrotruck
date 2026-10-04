@@ -362,6 +362,7 @@ export const pt: Dict = {
     truckNamePlaceholder: "Ex.: Mercedes Actros basculante 20 t",
     brand: "Marca",
     model: "Modelo",
+    plate: "Matrícula",
     category: "Tipo de viatura",
     listingMode: "Tipo de oferta",
     capacity: "Capacidade (toneladas)",

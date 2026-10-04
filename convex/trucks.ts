@@ -24,6 +24,7 @@ const truckFields = {
   description: v.string(),
   photoIds: v.array(v.id("_storage")),
   whatsapp: v.optional(v.string()),
+  plate: v.optional(v.string()),
 };
 
 function clean(input: ObjectType<typeof truckFields>) {
@@ -41,6 +42,7 @@ function clean(input: ObjectType<typeof truckFields>) {
     goods: input.goods.map((good) => good.trim().slice(0, 40)).filter(Boolean).slice(0, 12),
     description: input.description.trim().slice(0, 1500),
     whatsapp: input.whatsapp?.trim().slice(0, 25) || undefined,
+    plate: input.plate?.trim().toUpperCase().replace(/\s+/g, " ").slice(0, 15) || undefined,
   };
 }
 
