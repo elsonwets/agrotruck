@@ -215,3 +215,53 @@ describe("tracking", () => {
     expect(await t.query(api.tracking.missionPosition, { token: producer, missionId })).toBeNull();
   });
 });
+
+describe("fleet views", () => {
+  it("opens the fleet tab from 2 vehicles", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await signup(t, "transporter", "+245955000850");
+    const producer = await signup(t, "producer", "+245955000851");
+    await addTruck(t, owner, "Camion A");
+    expect(await t.query(api.fleet.access, { token: owner })).toEqual({ fleet: false });
+    await expect(t.query(api.fleet.overview, { token: owner })).rejects.toThrow(/forbidden/);
+    await addTruck(t, owner, "Camion B");
+    expect(await t.query(api.fleet.access, { token: owner })).toEqual({ fleet: true });
+    expect(await t.query(api.fleet.access, { token: producer })).toEqual({ fleet: false });
+    expect(await t.query(api.fleet.access, { token: "unknown" })).toEqual({ fleet: false });
+  });
+
+  it("gives the owner statuses, drivers and positions, and the public no coordinates", async () => {
+    const t = convexTest(schema, modules);
+    const { owner, truckA, truckB } = await fleetSetup(t);
+    await t.mutation(api.trucks.setAvailability, { token: owner, truckId: truckB, availability: "maintenance" });
+    const driverId = await t.mutation(api.drivers.create, { token: owner, name: "Mamadu Baldé", phone: "+245955111222", truckId: truckA });
+    await assignedMission(t, owner, truckA);
+    const { linkToken } = await t.mutation(api.tracking.createLink, { token: owner, driverId });
+    await t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.28, lng: -14.22, accuracy: 12 });
+
+    const overview = await t.query(api.fleet.overview, { token: owner });
+    const a = overview.find((truck) => truck._id === truckA);
+    const b = overview.find((truck) => truck._id === truckB);
+    expect(a).toMatchObject({ status: "loading", driver: { name: "Mamadu Baldé", phone: "+245955111222" }, position: { lat: 12.28, lng: -14.22 }, progress: 0 });
+    expect(a?.mission).toMatchObject({ pickupZone: "gabu", dropoffZone: "bissau" });
+    expect(b).toMatchObject({ status: "maintenance", driver: null, position: null, mission: null, progress: null });
+
+    const list = await t.query(api.fleet.publicList, {});
+    expect(list.find((truck) => truck._id === truckA)).toMatchObject({ status: "loading", driverName: "Mamadu", route: { pickupZone: "gabu", dropoffZone: "bissau" } });
+    expect(JSON.stringify(list)).not.toMatch(/"lat"|"lng"|"accuracy"|"phone"|\+245/);
+  });
+
+  it("cleans the position, driver and links of a deleted truck", async () => {
+    const t = convexTest(schema, modules);
+    const { owner, truckA } = await fleetSetup(t);
+    await addTruck(t, owner, "Camion C"); // il reste 2 véhicules après la suppression
+    const driverId = await t.mutation(api.drivers.create, { token: owner, name: "Mamadu", phone: "+245955111222", truckId: truckA });
+    const { linkToken } = await t.mutation(api.tracking.createLink, { token: owner, driverId });
+    await t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.28, lng: -14.22 });
+
+    await t.mutation(api.trucks.remove, { token: owner, truckId: truckA });
+    expect(await t.run((ctx) => ctx.db.query("positions").collect())).toHaveLength(0);
+    expect((await t.query(api.drivers.list, { token: owner }))[0]).toMatchObject({ truckId: null, linkExpiresAt: null });
+    expect(await t.query(api.tracking.linkInfo, { linkToken })).toBeNull();
+  });
+});

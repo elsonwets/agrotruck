@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as drivers from "../drivers.js";
+import type * as fleet from "../fleet.js";
 import type * as lib_attempts from "../lib/attempts.js";
 import type * as lib_fleet from "../lib/fleet.js";
 import type * as lib_missionView from "../lib/missionView.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
   drivers: typeof drivers;
+  fleet: typeof fleet;
   "lib/attempts": typeof lib_attempts;
   "lib/fleet": typeof lib_fleet;
   "lib/missionView": typeof lib_missionView;

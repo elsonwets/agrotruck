@@ -2,6 +2,7 @@ import { ConvexError, v, type ObjectType } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { requireUser } from "./lib/session";
+import { latestPosition, linksOfTruck, revokeLinks } from "./lib/fleet";
 import { vAvailability, vCategory, vListingMode, vZone } from "./lib/validators";
 
 // Annonces de véhicules. Pas de validation : un transporteur publie directement ; l'admin peut masquer une annonce.
@@ -66,7 +67,7 @@ async function photoUrls(ctx: QueryCtx, ids: Id<"_storage">[]) {
 }
 
 // Carte publique (catalogue) : pas de téléphone, seulement ce qu'il faut pour choisir.
-async function card(ctx: QueryCtx, truck: Doc<"trucks">, owner: Doc<"users">) {
+export async function card(ctx: QueryCtx, truck: Doc<"trucks">, owner: Doc<"users">) {
   return {
     _id: truck._id,
     slug: truck.slug,
@@ -86,7 +87,7 @@ async function card(ctx: QueryCtx, truck: Doc<"trucks">, owner: Doc<"users">) {
   };
 }
 
-async function visibleOwner(ctx: QueryCtx, truck: Doc<"trucks">) {
+export async function visibleOwner(ctx: QueryCtx, truck: Doc<"trucks">) {
   const owner = await ctx.db.get("users", truck.ownerId);
   return owner && !owner.disabled ? owner : null;
 }
@@ -204,6 +205,14 @@ export const remove = mutation({
     for (const photoId of truck.photoIds) await ctx.storage.delete(photoId);
     const reviews = await ctx.db.query("reviews").withIndex("by_truckId", (q) => q.eq("truckId", truckId)).take(1000);
     for (const review of reviews) await ctx.db.delete("reviews", review._id);
+    // Suivi GPS : la position disparaît, le conducteur est détaché et les liens vers ce camion sont coupés.
+    const position = await latestPosition(ctx, truckId);
+    if (position) await ctx.db.delete("positions", position._id);
+    if (truck.driverId) {
+      const driver = await ctx.db.get("drivers", truck.driverId);
+      if (driver) await ctx.db.patch("drivers", driver._id, { truckId: undefined, updatedAt: Date.now() });
+    }
+    await revokeLinks(ctx, await linksOfTruck(ctx, truckId));
     await ctx.db.delete("trucks", truckId);
     return null;
   },
