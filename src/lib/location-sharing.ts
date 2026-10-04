@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { shouldSend, type Fix } from "~/shared/fleet";
+import { checkFix, shouldSend, type Fix } from "~/shared/fleet";
 import { errorCode } from "./errors";
 
 export interface FixPayload { lat: number; lng: number; accuracy?: number; speed?: number; heading?: number }
@@ -53,12 +53,18 @@ export function useLocationSharing(send: (fix: FixPayload) => Promise<unknown>) 
     watchId.current = navigator.geolocation.watchPosition((position) => {
       const fix: Fix = { lat: position.coords.latitude, lng: position.coords.longitude, at: Date.now() };
       if (inFlight.current || !navigator.onLine || !shouldSend(last.current, fix)) return;
-      inFlight.current = true;
-      sendRef.current({
+      const payload: FixPayload = {
         lat: fix.lat, lng: fix.lng, accuracy: position.coords.accuracy,
         speed: position.coords.speed ?? undefined, heading: position.coords.heading ?? undefined,
-      })
-        .then(() => { if (watchId.current === null) return; last.current = fix; setLastSentAt(Date.now()); setFailure(null); setPaused(false); setState("sharing"); })
+      };
+      // Le serveur ignore sans erreur un point imprécis ou invalide : inutile de l'envoyer ni de l'annoncer comme envoyé.
+      if (checkFix(payload) !== "ok") return;
+      inFlight.current = true;
+      sendRef.current(payload)
+        .then((result) => {
+          if (watchId.current === null) return;
+          if (typeof result === "object" && result !== null && "recorded" in result && result.recorded === false) return;
+          last.current = fix; setLastSentAt(Date.now()); setFailure(null); setPaused(false); setState("sharing"); })
         .catch((reason: unknown) => {
           if (watchId.current === null) return; // partage déjà arrêté : réponse périmée
           const code = errorCode(reason);
