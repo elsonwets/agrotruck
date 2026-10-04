@@ -31,6 +31,8 @@ import { Route as LangProducerIndexRouteImport } from './routes/$lang/producer/i
 import { Route as LangProducerNewRouteImport } from './routes/$lang/producer/new'
 import { Route as LangTrackTokenRouteImport } from './routes/$lang/track.$token'
 import { Route as LangTransporterIndexRouteImport } from './routes/$lang/transporter/index'
+import { Route as LangTransporterDriversRouteImport } from './routes/$lang/transporter/drivers'
+import { Route as LangTransporterFleetRouteImport } from './routes/$lang/transporter/fleet'
 import { Route as LangTrucksSlugRouteImport } from './routes/$lang/trucks.$slug'
 import { Route as LangProducerMissionsMissionIdRouteImport } from './routes/$lang/producer/missions.$missionId'
 import { Route as LangTransporterMissionsIndexRouteImport } from './routes/$lang/transporter/missions.index'
@@ -149,6 +151,16 @@ const LangTransporterIndexRoute = LangTransporterIndexRouteImport.update({
   path: '/transporter/',
   getParentRoute: () => LangRoute,
 } as any)
+const LangTransporterDriversRoute = LangTransporterDriversRouteImport.update({
+  id: '/transporter/drivers',
+  path: '/transporter/drivers',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangTransporterFleetRoute = LangTransporterFleetRouteImport.update({
+  id: '/transporter/fleet',
+  path: '/transporter/fleet',
+  getParentRoute: () => LangRoute,
+} as any)
 const LangTrucksSlugRoute = LangTrucksSlugRouteImport.update({
   id: '/trucks/$slug',
   path: '/trucks/$slug',
@@ -211,6 +223,8 @@ export interface FileRoutesByFullPath {
   '/$lang/admin/users': typeof LangAdminUsersRoute
   '/$lang/producer/new': typeof LangProducerNewRoute
   '/$lang/track/$token': typeof LangTrackTokenRoute
+  '/$lang/transporter/drivers': typeof LangTransporterDriversRoute
+  '/$lang/transporter/fleet': typeof LangTransporterFleetRoute
   '/$lang/trucks/$slug': typeof LangTrucksSlugRoute
   '/$lang/admin/': typeof LangAdminIndexRoute
   '/$lang/producer/': typeof LangProducerIndexRoute
@@ -241,6 +255,8 @@ export interface FileRoutesByTo {
   '/$lang/admin/users': typeof LangAdminUsersRoute
   '/$lang/producer/new': typeof LangProducerNewRoute
   '/$lang/track/$token': typeof LangTrackTokenRoute
+  '/$lang/transporter/drivers': typeof LangTransporterDriversRoute
+  '/$lang/transporter/fleet': typeof LangTransporterFleetRoute
   '/$lang/trucks/$slug': typeof LangTrucksSlugRoute
   '/$lang/admin': typeof LangAdminIndexRoute
   '/$lang/producer': typeof LangProducerIndexRoute
@@ -273,6 +289,8 @@ export interface FileRoutesById {
   '/$lang/admin/users': typeof LangAdminUsersRoute
   '/$lang/producer/new': typeof LangProducerNewRoute
   '/$lang/track/$token': typeof LangTrackTokenRoute
+  '/$lang/transporter/drivers': typeof LangTransporterDriversRoute
+  '/$lang/transporter/fleet': typeof LangTransporterFleetRoute
   '/$lang/trucks/$slug': typeof LangTrucksSlugRoute
   '/$lang/admin/': typeof LangAdminIndexRoute
   '/$lang/producer/': typeof LangProducerIndexRoute
@@ -306,6 +324,8 @@ export interface FileRouteTypes {
     | '/$lang/admin/users'
     | '/$lang/producer/new'
     | '/$lang/track/$token'
+    | '/$lang/transporter/drivers'
+    | '/$lang/transporter/fleet'
     | '/$lang/trucks/$slug'
     | '/$lang/admin/'
     | '/$lang/producer/'
@@ -336,6 +356,8 @@ export interface FileRouteTypes {
     | '/$lang/admin/users'
     | '/$lang/producer/new'
     | '/$lang/track/$token'
+    | '/$lang/transporter/drivers'
+    | '/$lang/transporter/fleet'
     | '/$lang/trucks/$slug'
     | '/$lang/admin'
     | '/$lang/producer'
@@ -367,6 +389,8 @@ export interface FileRouteTypes {
     | '/$lang/admin/users'
     | '/$lang/producer/new'
     | '/$lang/track/$token'
+    | '/$lang/transporter/drivers'
+    | '/$lang/transporter/fleet'
     | '/$lang/trucks/$slug'
     | '/$lang/admin/'
     | '/$lang/producer/'
@@ -542,6 +566,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LangTransporterIndexRouteImport
       parentRoute: typeof LangRoute
     }
+    '/$lang/transporter/drivers': {
+      id: '/$lang/transporter/drivers'
+      path: '/transporter/drivers'
+      fullPath: '/$lang/transporter/drivers'
+      preLoaderRoute: typeof LangTransporterDriversRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/transporter/fleet': {
+      id: '/$lang/transporter/fleet'
+      path: '/transporter/fleet'
+      fullPath: '/$lang/transporter/fleet'
+      preLoaderRoute: typeof LangTransporterFleetRouteImport
+      parentRoute: typeof LangRoute
+    }
     '/$lang/trucks/$slug': {
       id: '/$lang/trucks/$slug'
       path: '/trucks/$slug'
@@ -610,6 +648,8 @@ interface LangRouteChildren {
   LangAdminUsersRoute: typeof LangAdminUsersRoute
   LangProducerNewRoute: typeof LangProducerNewRoute
   LangTrackTokenRoute: typeof LangTrackTokenRoute
+  LangTransporterDriversRoute: typeof LangTransporterDriversRoute
+  LangTransporterFleetRoute: typeof LangTransporterFleetRoute
   LangTrucksSlugRoute: typeof LangTrucksSlugRoute
   LangAdminIndexRoute: typeof LangAdminIndexRoute
   LangProducerIndexRoute: typeof LangProducerIndexRoute
@@ -638,6 +678,8 @@ const LangRouteChildren: LangRouteChildren = {
   LangAdminUsersRoute: LangAdminUsersRoute,
   LangProducerNewRoute: LangProducerNewRoute,
   LangTrackTokenRoute: LangTrackTokenRoute,
+  LangTransporterDriversRoute: LangTransporterDriversRoute,
+  LangTransporterFleetRoute: LangTransporterFleetRoute,
   LangTrucksSlugRoute: LangTrucksSlugRoute,
   LangAdminIndexRoute: LangAdminIndexRoute,
   LangProducerIndexRoute: LangProducerIndexRoute,

@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
 import { LogOut } from "lucide-react";
+import { api } from "../../../convex/_generated/api";
 import { useLang, useT } from "~/lib/i18n";
 import { useSession } from "~/lib/session";
 import type { Role } from "~/shared/domain";
@@ -10,7 +12,9 @@ type Tab = { to: string; search?: Record<string, string>; label: string; exact?:
 export function SpaceNav() {
   const lang = useLang();
   const t = useT();
-  const { session, signOut } = useSession();
+  const { session, signOut, token } = useSession();
+  // Onglets « Ma flotte » et « Conducteurs » : seulement pour un transporteur avec 2 véhicules ou plus.
+  const access = useQuery(api.fleet.access, session?.role === "transporter" && token ? { token } : "skip");
   if (!session) return null;
 
   const tabs: Record<Role, Tab[]> = {
@@ -23,6 +27,10 @@ export function SpaceNav() {
       { to: "/$lang/transporter", label: t.space.transporterTabs.available, exact: true },
       { to: "/$lang/transporter/missions", label: t.space.transporterTabs.assigned },
       { to: "/$lang/transporter/trucks", label: t.space.transporterTabs.trucks },
+      ...(access?.fleet ? [
+        { to: "/$lang/transporter/fleet", label: t.space.transporterTabs.fleet },
+        { to: "/$lang/transporter/drivers", label: t.space.transporterTabs.drivers },
+      ] : []),
       { to: "/$lang/profile", label: t.nav.profile },
     ],
     admin: [
