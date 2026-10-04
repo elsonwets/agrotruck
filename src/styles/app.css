@@ -69,3 +69,7 @@ html, body { overflow-x: clip; }
   [data-print-hidden], header, footer { display: none !important; }
   body { background: #fff; }
 }
+
+/* Repères numérotés de la carte de flotte (aussi utilisés dans la liste, pour retrouver le même camion). */
+.fleet-pin { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9999px; border: 2px solid #fff; background: var(--color-brand-800); color: #fff; font: 600 13px/1 Poppins, system-ui, sans-serif; box-shadow: 0 1px 4px rgb(0 0 0 / 0.35); }
+.fleet-pin--stale { background: #8a8f98; }
