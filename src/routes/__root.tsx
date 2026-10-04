@@ -5,6 +5,14 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { DEFAULT_LANG, isLang } from "~/shared/domain";
 import appCss from "~/styles/app.css?url";
 
+// Le jeton du lien conducteur est dans l'URL (/xx/track/<jeton>) : il ne doit pas partir chez Vercel.
+const hideTrackToken = (url: string) => url.replace(/\/track\/[^/?#]+/, "/track/[token]");
+const scrub = <T extends { url: string; route?: string | null }>(event: T): T => ({
+  ...event,
+  url: hideTrackToken(event.url),
+  ...(event.route ? { route: hideTrackToken(event.route) } : {}),
+});
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -36,8 +44,8 @@ function RootDocument() {
       </head>
       <body className="flex min-h-dvh flex-col">
         <Outlet />
-        <Analytics />
-        <SpeedInsights />
+        <Analytics beforeSend={scrub} />
+        <SpeedInsights beforeSend={scrub} />
         <Scripts />
       </body>
     </html>

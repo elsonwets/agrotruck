@@ -39,7 +39,7 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).then((response) => {
-      if (response.ok && /^\/(fr|en|pt)(\/|$)/.test(url.pathname)) {
+      if (response.ok && /^\/(fr|en|pt)(\/|$)/.test(url.pathname) && !/^\/(fr|en|pt)\/track\//.test(url.pathname)) {
         const copy = response.clone();
         caches.open(CACHE).then((cache) => cache.put(url.pathname, copy));
       }
