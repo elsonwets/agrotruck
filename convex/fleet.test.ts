@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { describe, expect, it } from "vitest";
-import { api } from "./_generated/api";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
@@ -31,6 +31,22 @@ async function fleetSetup(t: T, phone = "+245955000810") {
   const truckB = await addTruck(t, owner, "Camion B");
   return { owner, truckA, truckB };
 }
+
+const missionInput = {
+  vehicleCategory: "camion" as const, pickupZone: "gabu" as const, pickupLocation: "Pirada",
+  dropoffZone: "bissau" as const, dropoffLocation: "Porto", productType: "cashew" as const, quantitySacks: 200, neededFrom: "2026-10-10",
+};
+
+// Mission Gabú → Bissau attribuée au transporteur, avec ce camion (statut « assigned »).
+async function assignedMission(t: T, transporter: string, truckId: Id<"trucks">, producerPhone = "+245955000890") {
+  const producer = await signup(t, "producer", producerPhone);
+  const missionId = await t.mutation(api.missions.create, { token: producer, ...missionInput });
+  const offerId = await t.mutation(api.offers.send, { token: transporter, missionId, price: 150_000, truckId });
+  await t.mutation(api.offers.choose, { token: producer, offerId });
+  return { producer, missionId };
+}
+
+const at = (iso: string) => vi.setSystemTime(new Date(iso));
 
 describe("trucks", () => {
   it("stores the licence plate in capitals", async () => {
@@ -88,5 +104,114 @@ describe("drivers", () => {
 
     await t.mutation(api.drivers.setDisabled, { token: owner, driverId, disabled: true });
     expect((await t.query(api.drivers.list, { token: owner }))[0].disabled).toBe(true);
+  });
+});
+
+describe("tracking", () => {
+  afterEach(() => { vi.useRealTimers(); });
+
+  it("records a driver's position through the link, at most every 10 s", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    at("2026-10-04T08:00:00Z");
+    const t = convexTest(schema, modules);
+    const { owner, truckA } = await fleetSetup(t);
+    const driverId = await t.mutation(api.drivers.create, { token: owner, name: "Mamadu Baldé", phone: "+245955111222", truckId: truckA });
+    const { linkToken } = await t.mutation(api.tracking.createLink, { token: owner, driverId });
+    expect(await t.query(api.tracking.linkInfo, { linkToken })).toEqual({
+      active: true, expiresAt: Date.parse("2026-10-11T08:00:00Z"), driverName: "Mamadu", truckName: "Camion A", plate: null,
+    });
+    expect(await t.query(api.drivers.list, { token: owner })).toEqual([expect.objectContaining({ linkExpiresAt: Date.parse("2026-10-11T08:00:00Z") })]);
+
+    expect(await t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.28, lng: -14.22, accuracy: 15 })).toEqual({ recorded: true });
+    at("2026-10-04T08:00:05Z");
+    expect(await t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.29, lng: -14.23 })).toEqual({ recorded: false });
+    at("2026-10-04T08:00:31Z");
+    expect(await t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.29, lng: -14.23, accuracy: 5000 })).toEqual({ recorded: false });
+    await expect(t.mutation(api.tracking.reportFromLink, { linkToken, lat: 200, lng: 0 })).rejects.toThrow(/invalid_position/);
+    expect(await t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.3, lng: -14.3 })).toEqual({ recorded: true });
+
+    const position = await t.run((ctx) => ctx.db.query("positions").withIndex("by_truckId", (q) => q.eq("truckId", truckA)).unique());
+    expect(position).toMatchObject({ lat: 12.3, lng: -14.3, source: "link", driverId, at: Date.parse("2026-10-04T08:00:31Z") });
+  });
+
+  it("refuses replaced, reassigned, revoked and expired links, then purges them", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    at("2026-10-04T08:00:00Z");
+    const t = convexTest(schema, modules);
+    const { owner, truckA, truckB } = await fleetSetup(t);
+    const driverId = await t.mutation(api.drivers.create, { token: owner, name: "Mamadu", phone: "+245955111222", truckId: truckA });
+    const report = (linkToken: string) => t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.28, lng: -14.22 });
+
+    const first = (await t.mutation(api.tracking.createLink, { token: owner, driverId })).linkToken;
+    const second = (await t.mutation(api.tracking.createLink, { token: owner, driverId })).linkToken;
+    await expect(report(first)).rejects.toThrow(/link_invalid/);
+    expect(await t.query(api.tracking.linkInfo, { linkToken: first })).toMatchObject({ active: false });
+    expect(await report(second)).toEqual({ recorded: true });
+
+    // Le camion A est confié à un autre conducteur : le lien de Mamadu ne marche plus.
+    await t.mutation(api.drivers.create, { token: owner, name: "Braima", phone: "+245955111333", truckId: truckA });
+    await expect(report(second)).rejects.toThrow(/link_invalid/);
+
+    await t.mutation(api.drivers.update, { token: owner, driverId, name: "Mamadu", phone: "+245955111222", truckId: truckB });
+    const third = (await t.mutation(api.tracking.createLink, { token: owner, driverId })).linkToken;
+    await t.mutation(api.tracking.revokeLink, { token: owner, driverId });
+    await expect(report(third)).rejects.toThrow(/link_invalid/);
+
+    const fourth = (await t.mutation(api.tracking.createLink, { token: owner, driverId })).linkToken;
+    at("2026-10-11T08:00:01Z");
+    await expect(report(fourth)).rejects.toThrow(/link_invalid/);
+    await t.mutation(internal.tracking.purgeExpiredLinks, {});
+    expect(await t.query(api.tracking.linkInfo, { linkToken: fourth })).toBeNull();
+    await expect(report("not-a-token")).rejects.toThrow(/link_invalid/);
+  });
+
+  it("stops the links of a disabled driver, or of an owner left with one vehicle", async () => {
+    const t = convexTest(schema, modules);
+    const { owner, truckA, truckB } = await fleetSetup(t);
+    const driverId = await t.mutation(api.drivers.create, { token: owner, name: "Mamadu", phone: "+245955111222", truckId: truckA });
+    const { linkToken } = await t.mutation(api.tracking.createLink, { token: owner, driverId });
+
+    await t.mutation(api.drivers.setDisabled, { token: owner, driverId, disabled: true });
+    await expect(t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.28, lng: -14.22 })).rejects.toThrow(/link_invalid/);
+    await expect(t.mutation(api.tracking.createLink, { token: owner, driverId })).rejects.toThrow(/driver_unavailable/);
+
+    await t.mutation(api.drivers.setDisabled, { token: owner, driverId, disabled: false });
+    const again = (await t.mutation(api.tracking.createLink, { token: owner, driverId })).linkToken;
+    await t.mutation(api.trucks.remove, { token: owner, truckId: truckB });
+    await expect(t.mutation(api.tracking.reportFromLink, { linkToken: again, lat: 12.28, lng: -14.22 })).rejects.toThrow(/link_invalid/);
+    expect(await t.query(api.tracking.linkInfo, { linkToken: again })).toMatchObject({ active: false });
+  });
+
+  it("lets a solo transporter share from their account only during their own mission", async () => {
+    const t = convexTest(schema, modules);
+    const solo = await signup(t, "transporter", "+245955000830", { vehicleCategories: ["camion"], workZones: ["gabu"] });
+    const truckId = await addTruck(t, solo, "Actros");
+    const fix = { lat: 12.28, lng: -14.22, accuracy: 10 };
+    await expect(t.mutation(api.tracking.reportFromOwner, { token: solo, truckId, ...fix })).rejects.toThrow(/no_active_mission/);
+    await assignedMission(t, solo, truckId);
+    expect(await t.mutation(api.tracking.reportFromOwner, { token: solo, truckId, ...fix })).toEqual({ recorded: true });
+    const intruder = await signup(t, "transporter", "+245955000831");
+    await expect(t.mutation(api.tracking.reportFromOwner, { token: intruder, truckId, ...fix })).rejects.toThrow(/forbidden/);
+  });
+
+  it("shows the position only to the producer and the transporter of the ongoing mission", async () => {
+    const t = convexTest(schema, modules);
+    const solo = await signup(t, "transporter", "+245955000840", { vehicleCategories: ["camion"], workZones: ["gabu"] });
+    const truckId = await addTruck(t, solo, "Actros");
+    const { producer, missionId } = await assignedMission(t, solo, truckId);
+    const stranger = await signup(t, "producer", "+245955000841");
+
+    expect(await t.query(api.tracking.missionPosition, { token: producer, missionId })).toEqual({ position: null, driverName: null, progress: 0 });
+    await t.mutation(api.missions.act, { token: solo, missionId, action: "loaded" });
+    await t.mutation(api.tracking.reportFromOwner, { token: solo, truckId, lat: 12.0735, lng: -14.9072, accuracy: 10 }); // à mi-chemin
+
+    const seen = await t.query(api.tracking.missionPosition, { token: producer, missionId });
+    expect(seen?.position).toMatchObject({ lat: 12.0735, lng: -14.9072, accuracy: 10 });
+    expect(seen?.progress).toBeCloseTo(0.5, 1);
+    expect(await t.query(api.tracking.missionPosition, { token: solo, missionId })).not.toBeNull();
+    expect(await t.query(api.tracking.missionPosition, { token: stranger, missionId })).toBeNull();
+
+    await t.mutation(api.missions.act, { token: solo, missionId, action: "delivered" });
+    expect(await t.query(api.tracking.missionPosition, { token: producer, missionId })).toBeNull();
   });
 });
