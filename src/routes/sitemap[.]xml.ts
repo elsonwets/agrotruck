@@ -4,7 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { SITE_URL } from "~/lib/seo";
 import { LANGS } from "~/shared/domain";
 
-const PUBLIC_PATHS = ["", "/rental", "/sale", "/how-it-works", "/pricing", "/about", "/signup"];
+const PUBLIC_PATHS = ["", "/rental", "/sale", "/fleet", "/how-it-works", "/pricing", "/about", "/signup"];
 
 const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 

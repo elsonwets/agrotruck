@@ -15,6 +15,7 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as LangIndexRouteImport } from './routes/$lang/index'
 import { Route as LangAboutRouteImport } from './routes/$lang/about'
+import { Route as LangFleetRouteImport } from './routes/$lang/fleet'
 import { Route as LangHowItWorksRouteImport } from './routes/$lang/how-it-works'
 import { Route as LangLoginRouteImport } from './routes/$lang/login'
 import { Route as LangOfflineRouteImport } from './routes/$lang/offline'
@@ -69,6 +70,11 @@ const LangIndexRoute = LangIndexRouteImport.update({
 const LangAboutRoute = LangAboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => LangRoute,
+} as any)
+const LangFleetRoute = LangFleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
   getParentRoute: () => LangRoute,
 } as any)
 const LangHowItWorksRoute = LangHowItWorksRouteImport.update({
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
+  '/$lang/fleet': typeof LangFleetRoute
   '/$lang/how-it-works': typeof LangHowItWorksRoute
   '/$lang/login': typeof LangLoginRoute
   '/$lang/offline': typeof LangOfflineRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
+  '/$lang/fleet': typeof LangFleetRoute
   '/$lang/how-it-works': typeof LangHowItWorksRoute
   '/$lang/login': typeof LangLoginRoute
   '/$lang/offline': typeof LangOfflineRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$lang/about': typeof LangAboutRoute
+  '/$lang/fleet': typeof LangFleetRoute
   '/$lang/how-it-works': typeof LangHowItWorksRoute
   '/$lang/login': typeof LangLoginRoute
   '/$lang/offline': typeof LangOfflineRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/$lang/about'
+    | '/$lang/fleet'
     | '/$lang/how-it-works'
     | '/$lang/login'
     | '/$lang/offline'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/$lang/about'
+    | '/$lang/fleet'
     | '/$lang/how-it-works'
     | '/$lang/login'
     | '/$lang/offline'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/$lang/about'
+    | '/$lang/fleet'
     | '/$lang/how-it-works'
     | '/$lang/login'
     | '/$lang/offline'
@@ -452,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/$lang/about'
       preLoaderRoute: typeof LangAboutRouteImport
+      parentRoute: typeof LangRoute
+    }
+    '/$lang/fleet': {
+      id: '/$lang/fleet'
+      path: '/fleet'
+      fullPath: '/$lang/fleet'
+      preLoaderRoute: typeof LangFleetRouteImport
       parentRoute: typeof LangRoute
     }
     '/$lang/how-it-works': {
@@ -634,6 +653,7 @@ declare module '@tanstack/react-router' {
 
 interface LangRouteChildren {
   LangAboutRoute: typeof LangAboutRoute
+  LangFleetRoute: typeof LangFleetRoute
   LangHowItWorksRoute: typeof LangHowItWorksRoute
   LangLoginRoute: typeof LangLoginRoute
   LangOfflineRoute: typeof LangOfflineRoute
@@ -664,6 +684,7 @@ interface LangRouteChildren {
 
 const LangRouteChildren: LangRouteChildren = {
   LangAboutRoute: LangAboutRoute,
+  LangFleetRoute: LangFleetRoute,
   LangHowItWorksRoute: LangHowItWorksRoute,
   LangLoginRoute: LangLoginRoute,
   LangOfflineRoute: LangOfflineRoute,

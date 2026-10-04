@@ -12,6 +12,7 @@ const navLinks = [
   ["/$lang", "transport"],
   ["/$lang/rental", "rental"],
   ["/$lang/sale", "sale"],
+  ["/$lang/fleet", "fleet"],
   ["/$lang/how-it-works", "howItWorks"],
   ["/$lang/pricing", "pricing"],
   ["/$lang/about", "about"],
