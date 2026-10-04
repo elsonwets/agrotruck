@@ -10,12 +10,20 @@ type Leaflet = typeof import("leaflet");
 const DEFAULT_CENTER = zoneCenter("bissau");
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
+function frame(L: Leaflet, map: LeafletMap, markers: MapMarker[]) {
+  const [only] = markers;
+  if (markers.length === 1 && only) map.setView([only.lat, only.lng], 12);
+  else map.fitBounds(L.latLngBounds(markers.map((marker) => [marker.lat, marker.lng] as [number, number])), { padding: [32, 32], maxZoom: 13 });
+}
+
 // Carte OpenStreetMap avec Leaflet (~40 Ko), chargée seulement quand elle s'affiche : rien côté serveur, pas de WebGL.
 // `follow` : la carte suit le repère unique à chaque mise à jour (suivi d'un camion par le producteur).
 export function FleetMap({ markers, label, follow = false, className }: { markers: MapMarker[]; label: string; follow?: boolean; className?: string }) {
   const container = useRef<HTMLDivElement>(null);
   const leaflet = useRef<{ L: Leaflet; map: LeafletMap; layer: LayerGroup } | null>(null);
   const fitted = useRef(false);
+  const latest = useRef<MapMarker[]>(markers);
+  useEffect(() => { latest.current = markers; }, [markers]);
   // Repères existants par id : mis à jour sur place pour ne pas fermer une bulle ouverte.
   const shown = useRef(new Map<string, { marker: Marker; iconKey: string }>());
   const [ready, setReady] = useState(false);
@@ -32,7 +40,14 @@ export function FleetMap({ markers, label, follow = false, className }: { marker
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: ATTRIBUTION }).addTo(map);
       leaflet.current = { L, map, layer: L.layerGroup().addTo(map) };
       // La carte peut naître cachée (onglet « Liste » sur mobile) : elle se recalcule quand sa taille change.
-      observer = new ResizeObserver(() => map.invalidateSize());
+      // Le premier cadrage attend une taille non nulle : sinon Leaflet calcule un zoom absurde sur une carte 0×0.
+      observer = new ResizeObserver(() => {
+        map.invalidateSize();
+        if (!fitted.current && map.getSize().x > 0 && latest.current.length) {
+          fitted.current = true;
+          frame(L, map, latest.current);
+        }
+      });
       observer.observe(element);
       setReady(true);
     });
@@ -82,9 +97,11 @@ export function FleetMap({ markers, label, follow = false, className }: { marker
     const [only] = markers;
     if (!fitted.current && markers.length) {
       // Cadrage au premier affichage seulement : les mises à jour ne font pas sauter la carte.
-      fitted.current = true;
-      if (markers.length === 1 && only) map.setView([only.lat, only.lng], 12);
-      else map.fitBounds(L.latLngBounds(markers.map((marker) => [marker.lat, marker.lng] as [number, number])), { padding: [32, 32], maxZoom: 13 });
+      // Carte cachée (taille 0) : le ResizeObserver cadrera dès qu'elle devient visible.
+      if (map.getSize().x > 0) {
+        fitted.current = true;
+        frame(L, map, markers);
+      }
     } else if (follow && markers.length === 1 && only) {
       map.panTo([only.lat, only.lng]);
     }
