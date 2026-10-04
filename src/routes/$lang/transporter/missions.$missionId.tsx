@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useMutation } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { ContactCard, MissionFacts, MissionHistory, PendingBadge, StatusBadge, missionRoute, type MissionView } from "~/components/missions/parts";
+import { SharingPanel } from "~/components/fleet/sharing-panel";
 import { SessionGate } from "~/components/session-gate";
 import { Button } from "~/components/ui/button";
 import { Card, EmptyState, PageTitle } from "~/components/ui/card";
@@ -40,6 +42,7 @@ function TransporterMission() {
   const [time, setTime] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const reportOwner = useMutation(api.tracking.reportFromOwner);
 
   useEffect(() => {
     if (!server || !session) return;
@@ -56,6 +59,8 @@ function TransporterMission() {
   const mine = mission.transporterId === session.userId;
   const confirmed = mission.events.some((event) => event.type === "delivered" && event.userId === session.userId);
   const next = mine ? (mission.status === "assigned" ? "loaded" : mission.status === "loaded" || (mission.status === "delivered" && !confirmed) ? "delivered" : null) : null;
+  // Transporteur particulier : il partage sa position depuis son compte tant que sa mission est en cours.
+  const shareTruckId = mine && (mission.status === "assigned" || mission.status === "loaded") ? mission.truck?._id : undefined;
 
   const act = async (action: "loaded" | "delivered") => {
     setBusy(true);
@@ -76,6 +81,11 @@ function TransporterMission() {
       <MissionFacts mission={mission} />
       <ContactCard title={t.transporter.producer} contact={mission.producer} empty={t.transporter.producerHidden} />
       {mine && mission.truck && <Card className="p-5"><p className="mb-3 font-semibold text-muted">{t.offers.truck}</p><TruckLine truck={mission.truck} /></Card>}
+      {shareTruckId && <Card className="p-5">
+        <p className="font-semibold text-ink">{t.fleet.shareTitle}</p>
+        <p className="mb-4 mt-1 text-sm text-muted">{t.fleet.shareIntro}</p>
+        <SharingPanel send={(fix) => reportOwner({ token, truckId: shareTruckId, ...fix })} />
+      </Card>}
       {/* Offre : à envoyer tant que le producteur n'a pas choisi ; « non retenue » s'il en a choisi une autre. */}
       {!mine && (mission.status === "pending" || mission.myOffer?.status === "declined") && <OfferForm mission={mission} />}
     </div>

@@ -29,6 +29,7 @@ import { Route as LangAdminTrucksRouteImport } from './routes/$lang/admin/trucks
 import { Route as LangAdminUsersRouteImport } from './routes/$lang/admin/users'
 import { Route as LangProducerIndexRouteImport } from './routes/$lang/producer/index'
 import { Route as LangProducerNewRouteImport } from './routes/$lang/producer/new'
+import { Route as LangTrackTokenRouteImport } from './routes/$lang/track.$token'
 import { Route as LangTransporterIndexRouteImport } from './routes/$lang/transporter/index'
 import { Route as LangTrucksSlugRouteImport } from './routes/$lang/trucks.$slug'
 import { Route as LangProducerMissionsMissionIdRouteImport } from './routes/$lang/producer/missions.$missionId'
@@ -138,6 +139,11 @@ const LangProducerNewRoute = LangProducerNewRouteImport.update({
   path: '/producer/new',
   getParentRoute: () => LangRoute,
 } as any)
+const LangTrackTokenRoute = LangTrackTokenRouteImport.update({
+  id: '/track/$token',
+  path: '/track/$token',
+  getParentRoute: () => LangRoute,
+} as any)
 const LangTransporterIndexRoute = LangTransporterIndexRouteImport.update({
   id: '/transporter/',
   path: '/transporter/',
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/$lang/admin/trucks': typeof LangAdminTrucksRoute
   '/$lang/admin/users': typeof LangAdminUsersRoute
   '/$lang/producer/new': typeof LangProducerNewRoute
+  '/$lang/track/$token': typeof LangTrackTokenRoute
   '/$lang/trucks/$slug': typeof LangTrucksSlugRoute
   '/$lang/admin/': typeof LangAdminIndexRoute
   '/$lang/producer/': typeof LangProducerIndexRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/$lang/admin/trucks': typeof LangAdminTrucksRoute
   '/$lang/admin/users': typeof LangAdminUsersRoute
   '/$lang/producer/new': typeof LangProducerNewRoute
+  '/$lang/track/$token': typeof LangTrackTokenRoute
   '/$lang/trucks/$slug': typeof LangTrucksSlugRoute
   '/$lang/admin': typeof LangAdminIndexRoute
   '/$lang/producer': typeof LangProducerIndexRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/$lang/admin/trucks': typeof LangAdminTrucksRoute
   '/$lang/admin/users': typeof LangAdminUsersRoute
   '/$lang/producer/new': typeof LangProducerNewRoute
+  '/$lang/track/$token': typeof LangTrackTokenRoute
   '/$lang/trucks/$slug': typeof LangTrucksSlugRoute
   '/$lang/admin/': typeof LangAdminIndexRoute
   '/$lang/producer/': typeof LangProducerIndexRoute
@@ -296,6 +305,7 @@ export interface FileRouteTypes {
     | '/$lang/admin/trucks'
     | '/$lang/admin/users'
     | '/$lang/producer/new'
+    | '/$lang/track/$token'
     | '/$lang/trucks/$slug'
     | '/$lang/admin/'
     | '/$lang/producer/'
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/$lang/admin/trucks'
     | '/$lang/admin/users'
     | '/$lang/producer/new'
+    | '/$lang/track/$token'
     | '/$lang/trucks/$slug'
     | '/$lang/admin'
     | '/$lang/producer'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/$lang/admin/trucks'
     | '/$lang/admin/users'
     | '/$lang/producer/new'
+    | '/$lang/track/$token'
     | '/$lang/trucks/$slug'
     | '/$lang/admin/'
     | '/$lang/producer/'
@@ -516,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LangProducerNewRouteImport
       parentRoute: typeof LangRoute
     }
+    '/$lang/track/$token': {
+      id: '/$lang/track/$token'
+      path: '/track/$token'
+      fullPath: '/$lang/track/$token'
+      preLoaderRoute: typeof LangTrackTokenRouteImport
+      parentRoute: typeof LangRoute
+    }
     '/$lang/transporter/': {
       id: '/$lang/transporter/'
       path: '/transporter'
@@ -590,6 +609,7 @@ interface LangRouteChildren {
   LangAdminTrucksRoute: typeof LangAdminTrucksRoute
   LangAdminUsersRoute: typeof LangAdminUsersRoute
   LangProducerNewRoute: typeof LangProducerNewRoute
+  LangTrackTokenRoute: typeof LangTrackTokenRoute
   LangTrucksSlugRoute: typeof LangTrucksSlugRoute
   LangAdminIndexRoute: typeof LangAdminIndexRoute
   LangProducerIndexRoute: typeof LangProducerIndexRoute
@@ -617,6 +637,7 @@ const LangRouteChildren: LangRouteChildren = {
   LangAdminTrucksRoute: LangAdminTrucksRoute,
   LangAdminUsersRoute: LangAdminUsersRoute,
   LangProducerNewRoute: LangProducerNewRoute,
+  LangTrackTokenRoute: LangTrackTokenRoute,
   LangTrucksSlugRoute: LangTrucksSlugRoute,
   LangAdminIndexRoute: LangAdminIndexRoute,
   LangProducerIndexRoute: LangProducerIndexRoute,
