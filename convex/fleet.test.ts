@@ -251,6 +251,26 @@ describe("fleet views", () => {
     expect(JSON.stringify(list)).not.toMatch(/"lat"|"lng"|"accuracy"|"phone"|\+245/);
   });
 
+  it("shows a rounded progress and no coordinates publicly once the mission is loaded", async () => {
+    const t = convexTest(schema, modules);
+    const { owner, truckA } = await fleetSetup(t);
+    const driverId = await t.mutation(api.drivers.create, { token: owner, name: "Mamadu Baldé", phone: "+245955111222", truckId: truckA });
+    const { missionId } = await assignedMission(t, owner, truckA);
+    await t.mutation(api.missions.act, { token: owner, missionId, action: "loaded" });
+    const { linkToken } = await t.mutation(api.tracking.createLink, { token: owner, driverId });
+    await t.mutation(api.tracking.reportFromLink, { linkToken, lat: 12.0735, lng: -14.9072, accuracy: 10 }); // à mi-chemin
+
+    const list = await t.query(api.fleet.publicList, {});
+    const entry = list.find((truck) => truck._id === truckA);
+    expect(entry).toMatchObject({ status: "on_route" });
+    const p = entry?.progress as number;
+    expect(p).toBeGreaterThan(0);
+    expect(p).toBeLessThan(1);
+    expect(p).toBeCloseTo(0.5, 1);
+    expect(Math.round(p * 20) / 20).toBe(p);
+    expect(JSON.stringify(list)).not.toMatch(/"lat"|"lng"|"accuracy"|"phone"|\+245/);
+  });
+
   it("cleans the position, driver and links of a deleted truck", async () => {
     const t = convexTest(schema, modules);
     const { owner, truckA } = await fleetSetup(t);
