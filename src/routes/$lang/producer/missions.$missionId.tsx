@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { LiveTruck } from "~/components/fleet/live-truck";
 import { ContactCard, MissionFacts, MissionHistory, PendingBadge, StatusBadge, missionRoute, type MissionView } from "~/components/missions/parts";
 import { SessionGate } from "~/components/session-gate";
 import { Button } from "~/components/ui/button";
@@ -81,6 +82,8 @@ function ProducerMission() {
             <ContactCard title={t.producer.transporter} contact={mission.transporter}
               empty={mission.status === "cancelled" ? t.missionStatus.cancelled : t.producer.waitingTransporter} />
             {mission.truck && <Card className="p-5"><p className="mb-3 font-semibold text-muted">{t.offers.truck}</p><TruckLine truck={mission.truck} /></Card>}
+            {mission.truck && (mission.status === "assigned" || mission.status === "loaded") &&
+              <LiveTruck missionId={mission._id} from={mission.pickupZone} to={mission.dropoffZone} />}
           </>}
     </div>
 
