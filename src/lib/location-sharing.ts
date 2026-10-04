@@ -27,7 +27,11 @@ export function useLocationSharing(send: (fix: FixPayload) => Promise<unknown>) 
 
   const requestWakeLock = useCallback(() => {
     if (!("wakeLock" in navigator)) return;
-    navigator.wakeLock.request("screen").then((lock) => { wakeLock.current = lock; }).catch(() => undefined);
+    navigator.wakeLock.request("screen").then((lock) => {
+      // Arrêt survenu pendant l'octroi : on rend le verrou tout de suite au lieu de le garder.
+      if (watchId.current === null) void lock.release().catch(() => undefined);
+      else wakeLock.current = lock;
+    }).catch(() => undefined);
   }, []);
 
   const halt = useCallback((next: SharingState) => {
@@ -54,8 +58,9 @@ export function useLocationSharing(send: (fix: FixPayload) => Promise<unknown>) 
         lat: fix.lat, lng: fix.lng, accuracy: position.coords.accuracy,
         speed: position.coords.speed ?? undefined, heading: position.coords.heading ?? undefined,
       })
-        .then(() => { last.current = fix; setLastSentAt(Date.now()); setFailure(null); setPaused(false); setState("sharing"); })
+        .then(() => { if (watchId.current === null) return; last.current = fix; setLastSentAt(Date.now()); setFailure(null); setPaused(false); setState("sharing"); })
         .catch((reason: unknown) => {
+          if (watchId.current === null) return; // partage déjà arrêté : réponse périmée
           const code = errorCode(reason);
           setFailure(code ?? "network");
           if (code && FATAL.has(code)) halt("stopped");
